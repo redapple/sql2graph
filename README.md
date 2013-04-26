@@ -40,7 +40,7 @@ See examples folder.
 
 Then run:
 
-    python xyz-export.py --conf sql2graph.conf -N nodes.csv -R relations.csv
+    python xyz-export.py --config sql2graph.conf -N nodes.csv -R relations.csv
 
 4) You should now have:
 - a CSV file representing all nodes for all entities
@@ -61,6 +61,7 @@ You have 2 options:
  - or, run run_batchimport.py which uses the config file to run the command for you
         (check your sql2graph.conf BATCHIMPORT_SETTINGS section)
 
+    python run_batchimport.py --config sql2graph.conf
 
 5) (Re)start neo4j
 

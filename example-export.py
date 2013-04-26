@@ -36,6 +36,8 @@ SCHEMA = (
     )
 )
 
+DEFAULT_NODES_FILE = 'nodes.csv'
+DEFAULT_RELATIONS_FILE = 'relations.csv'
 
 def main():
 
@@ -43,7 +45,7 @@ def main():
     option_parser.add_option("-c", "--config", dest="configfile", help="configuration file", default=None)
     option_parser.add_option("-p", "--pretend", action="store_true", dest="pretend", help="just pretend; do not write anthing", default=False)
     option_parser.add_option("-N", "--nodes", dest="nodes_file", help="Nodes file", default=None)
-    option_parser.add_option("-R", "--relations", dest="rels_file", help="Relations file", default=None)
+    option_parser.add_option("-R", "--relations", dest="relations_file", help="Relations file", default=None)
     (options, args) = option_parser.parse_args()
 
     config_parser = ConfigParser.RawConfigParser()
@@ -94,11 +96,11 @@ def main():
 
     exporter.set_output_nodes_file(
         entity=sql2graph.export.MERGED,
-        filename=options.nodes_file or 'nodes.csv')
+        filename=options.nodes_file or DEFAULT_NODES_FILE)
 
     exporter.set_output_relations_file(
         entity=sql2graph.export.MERGED,
-        filename=options.rels_file or 'relations.csv')
+        filename=options.relations_file or DEFAULT_RELATIONS_FILE)
 
     for index_name, index_file in index_files.iteritems():
         exporter.set_output_indexes_file(entity=index_name, filename=index_file)
