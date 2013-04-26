@@ -1,0 +1,29 @@
+# Example configuration file for sql2graph
+
+# define all entities that you want to import
+# and tjeir corresponding CSV dump file
+# entity_name=dump_file
+[TABLE_DUMPS]
+car=/home/user/sql2graph/examples/cars/dumps/cars.csv
+manufacturer=/home/user/sql2graph/examples/cars/dumps/manufacturers.csv
+
+# define in what order the dump file/entities should be processed
+# if an entity2 has relations to another entity1, put entity2 after entity1
+[IMPORT_ORDER]
+order=manufacturer,
+    car
+
+# Optional index files (for Neo4J batch-import)
+# index_name=index_file
+# (index_name is the index defined in the schema's entity fields)
+[INDEX_FILES]
+cars=cars_index.csv
+manufacturers=manufacturers_index.csv
+
+# Optional parameters for running Neo4J batch-import
+# See https://github.com/jexp/batch-import
+[BATCHIMPORT_SETTINGS]
+jar_location=/home/user/tmp/neo4j-batch-import/target/batch-import-jar-with-dependencies.jar
+dbfile_location=/home/user/downloads/neo4j-community-x.x.x/data/graph.db
+nodes_file=cars_nodes.csv
+relations_file=cars_rels.csv
