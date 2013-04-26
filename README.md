@@ -43,22 +43,22 @@ Then run:
     python xyz-export.py --conf sql2graph.conf -N nodes.csv -R relations.csv
 
 4) You should now have:
-    - a CSV file representing all nodes for all entities
+- a CSV file representing all nodes for all entities
         (nodes.csv if you ran the command above)
-    - a CSV file representing the relations
+- a CSV file representing the relations
         (relations.csv if you ran the command above)
-    - depending on the field indexes you defined, a number of
+- depending on the field indexes you defined, a number of
         node index files for Neo4J (relation indexes not supported)
 
-    (see https://github.com/jexp/batch-import for the various files and format details)
+(See https://github.com/jexp/batch-import for the various files and format details.)
 
-Stop neo4j before running batch-import.
+**Stop neo4j before running batch-import.**
 
 You have 2 options:
-    either run Neo4J batch-import manually supplying your files on the command line
-    (again, see https://github.com/jexp/batch-import on how to do that)
+ - either run Neo4J batch-import manually supplying your files on the command line
+ (again, see https://github.com/jexp/batch-import on how to do that)
 
-    or, run run_batchimport.py which uses the config file to run the command for you
+ - or, run run_batchimport.py which uses the config file to run the command for you
         (check your sql2graph.conf BATCHIMPORT_SETTINGS section)
 
 
