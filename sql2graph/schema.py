@@ -43,6 +43,23 @@ class IntField(Field):
 class BoolField(Field):
     db_field_type = 'bool'
 
+class BooleanField(Field):
+    pass
+
+class IntegerField(IntField):
+    pass
+
+class PrimaryKeyField(IntField):
+    pass
+
+class CharField(Field):
+    db_field_type = 'string'
+
+class TextField(Field):
+    db_field_type = 'string'
+
+class DateTimeField(Field):
+    db_field_type = 'string'
 
 class Property(object):
 
