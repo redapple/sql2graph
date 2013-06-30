@@ -320,11 +320,35 @@ class SqliteIntrospector(Introspector):
             fks.append(ForeignKeyMapping(fk_column, rel_table, rel_pk))
         return fks
 
-
-SCHEMA_TEMPLATE_BEGIN = """
-#from entities import *
+FILE_START_TEMPLATE = """#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import optparse
+import ConfigParser
+import os
+import sys
+import traceback
+import sql2graph.export
 from sql2graph.schema import *
 
+"""
+
+FILE_END_TEMPLATE = """exporter = sql2graph.export.GraphExporter(
+    schema=SCHEMA, format='neo4j')
+
+for entity in SCHEMA:
+    print entity.name
+    exporter.set_output_nodes_file(entity=entity.name, filename='%s.nodes.csv' % entity.name.lower())
+    exporter.set_output_relations_file(entity=entity.name, filename='%s.rels.csv' % entity.name.lower())
+
+    if dumpfiles.get(entity.name):
+        exporter.feed_dumpfile(entity_name=entity.name, filename=dumpfiles.get(entity.name))
+    else:
+        sys.exit(-1)
+
+exporter.run()
+"""
+
+SCHEMA_TEMPLATE_BEGIN = """
 SCHEMA = (
 """
 
@@ -411,7 +435,7 @@ def introspect(db, schema=None, tables=[]):
 
 DUMPFILE_TEMPLATE = "%(tablename)s.csv"
 SQLEXPORT_TEMPLATE = "\copy (SELECT * FROM %(schema)s%(tablename)s) TO '%(filename)s' CSV HEADER DELIMITER E'\\t';"
-def print_models(engine, database, tables, **connect):
+def print_models(engine, database, tables, filespath, **connect):
     schema = connect.get('schema')
     db = get_introspector(engine, database, **connect)
 
@@ -428,9 +452,13 @@ def print_models(engine, database, tables, **connect):
             print_(SQLEXPORT_TEMPLATE % {
                     'schema': "%s." % schema if schema else '',
                     'tablename': model,
-                    'filename': DUMPFILE_TEMPLATE % {'tablename': model},
+                    'filename': '%(path)s/'+DUMPFILE_TEMPLATE % {
+                        'path' : filespath,
+                        'tablename': model,
+                    },
                 })
-            dumpfiles.append(("'%(model)s': '/path/to/"+DUMPFILE_TEMPLATE+"'") % {
+            dumpfiles.append(("'%(model)s': '%(path)s/"+DUMPFILE_TEMPLATE+"',") % {
+                    'path' : filespath,
                     'model': table_to_model[model],
                     'tablename': model,
                 })
@@ -492,6 +520,8 @@ def print_models(engine, database, tables, **connect):
             lines.append('fields=[')
             lines.append("    #Comment field you dont care about")
             for column, column_info in entity_fields:
+                if column_info.field_class == PrimaryKeyField:
+                    col_meta[model][column]['primary_key'] = True
                 field_params = join_params(col_meta[model][column],
                                     ignore=['rel_table', 'null'])
                 colname = cn(column)
@@ -513,6 +543,7 @@ def print_models(engine, database, tables, **connect):
             if not entity_relations:
                 return lines
             lines.append("relations=[")
+
             for column, column_info in entity_relations:
                 column_meta = col_meta[model][column]
 
@@ -543,7 +574,9 @@ def print_models(engine, database, tables, **connect):
                 properties_lines.append("    #Property('value', Column('intvalue')),")
                 properties_lines.append("]")
                 lines.extend(indent_lines(properties_lines, offset=8))
-                lines.append('    )')
+
+                lines.append('    ),')
+
             lines.append("]")
             return lines
 
@@ -561,6 +594,8 @@ def print_models(engine, database, tables, **connect):
         #print_('')
         seen.add(model)
 
+    print_(FILE_START_TEMPLATE)
+
     print_dumpfiles(models)
 
     print_(SCHEMA_TEMPLATE_BEGIN)
@@ -570,6 +605,8 @@ def print_models(engine, database, tables, **connect):
             if not tables or model in tables:
                 print_model(model, seen)
     print_(SCHEMA_TEMPLATE_END)
+
+    print_(FILE_END_TEMPLATE)
 
 # misc
 tn = lambda t: re.sub('[\W_]+', '', t.title())
@@ -591,6 +628,7 @@ if __name__ == '__main__':
     ao('-e', '--engine', dest='engine', default='postgresql')
     ao('-s', '--schema', dest='schema')
     ao('-t', '--tables', dest='tables')
+    ao('-F', '--path', dest='filespath', default=None)
 
     options, args = parser.parse_args()
     ops = ('host', 'port', 'user', 'password', 'schema')
@@ -610,4 +648,4 @@ if __name__ == '__main__':
         tables = [x for x in options.tables.split(',') if x]
     else:
         tables = []
-    print_models(options.engine, database, tables, **connect)
+    print_models(options.engine, database, tables, options.filespath, **connect)

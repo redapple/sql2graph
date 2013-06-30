@@ -9,6 +9,7 @@ import bz2
 import csv
 import traceback
 import sys
+import copy
 
 # ----------------------------------------------------------------------
 MERGED = '***MERGED***'
@@ -79,8 +80,14 @@ class GraphExporter(object):
 
         self.node_list = graph.NodeList()
         self.relation_list = graph.RelationList()
-        self.nodes_csv_fields = None    # used as CSV header column names
-        self.rels_csv_fields = None # used as CSV header column names
+
+        self.global_nodes_csv_fields = None    # used as CSV header column names
+        # per-entity CSV header
+        self.nodes_csv_fields = {}
+
+        self.global_rels_csv_fields = None # used as CSV header column names
+        # per-entity CSV header
+        self.rels_csv_fields = {}
 
         self.schema = dict((entity.name, entity) for entity in schema)
 
@@ -97,11 +104,11 @@ class GraphExporter(object):
     def supported_format(self, format):
         return format.lower() in [f.lower() for f in self.SUPPORTED_OUTPUT_FORMATS]
 
-    def feed_dumpfile(self, entity, filename, fields=None):
-        self.dumpfiles[entity] = filename
+    def feed_dumpfile(self, entity_name, filename, fields=None):
+        self.dumpfiles[entity_name] = filename
         if fields:
-            self.dumpfile_fields[entity] = fields
-        self.entity_order.append(entity)
+            self.dumpfile_fields[entity_name] = fields
+        self.entity_order.append(entity_name)
 
     def set_output_nodes_file(self, entity, filename):
         self.output_nodes_files[entity] = filename
@@ -131,6 +138,7 @@ class GraphExporter(object):
             if entity_name not in self.entity_order:
                 continue
             if entity.fields:
+                self.nodes_csv_fields[entity_name] = copy.copy(fields_begin)
                 for field in entity.fields:
                     # the following could be used to add a column type to CSV header fields
                     #node_properties.append(
@@ -138,29 +146,88 @@ class GraphExporter(object):
                             #field.name,
                             #":%s" % field.db_field_type
                                 #if field.db_field_type else ''))
-                   node_properties.append(field.name)
-        self.nodes_csv_fields = fields_begin + list(set(node_properties) - set(fields_begin))
+
+                    node_properties.append(field.name)
+                    self.nodes_csv_fields[entity_name].append(field.name)
+            self.nodes_csv_fields[entity_name] = set(self.nodes_csv_fields[entity_name])
+        self.global_nodes_csv_fields = fields_begin + list(set(node_properties) - set(fields_begin))
 
     def read_rels_csv_fields(self):
         fields_begin = ['start', 'end', 'rel_type']
         rels_properties = []
         for entity_name, entity in self.schema.iteritems():
+            self.rels_csv_fields[entity_name] = copy.copy(fields_begin)
             if entity_name not in self.entity_order:
                 continue
             if entity.relations:
                 for rel in entity.relations:
                    rels_properties.extend([prop.name for prop in rel.properties])
-        self.rels_csv_fields = fields_begin + list(
+                   self.rels_csv_fields[entity_name].extend([prop.name for prop in rel.properties])
+            self.rels_csv_fields[entity_name] = set(self.rels_csv_fields[entity_name])
+        self.global_rels_csv_fields = fields_begin + list(
             set(rels_properties) - set(fields_begin))
 
     def export(self):
         """
         Read dump files and write nodes and relations at the same time
         """
-        # write all nodes in ONE file and all relations in ONE file
-        # (works ONLY for Neo4j batch-import format)
 
-        onodes_filename = self.output_nodes_files.get(MERGED)
+        for entity_name in self.entity_order:
+            self.export_entity(entity_name)
+
+    def export_entity(self, entity_name):
+
+        if not self.dumpfiles.get(entity_name) or not self.schema.get(entity_name):
+            if self.DEBUG:
+                print "no dump file or not schema configured for entity", entity_name
+            return
+
+        onodes_filename = self.output_nodes_files.get(entity_name)
+        orels_filename = self.output_relations_files.get(entity_name)
+
+        nodes_csv_writer, rels_csv_writer = None, None
+
+        if onodes_filename:
+            if not self.pretend:
+                nodes_writer = CsvBatchWriter(onodes_filename, self.CSV_BATCH_SIZE)
+                nodes_writer.initialize(self.nodes_csv_fields[entity_name])
+
+        if orels_filename:
+            if not self.pretend:
+                rels_writer = CsvBatchWriter(orels_filename, self.CSV_BATCH_SIZE)
+                rels_writer.initialize(self.rels_csv_fields[entity_name])
+
+        index_writers = {}
+
+
+
+        if self.DEBUG:
+            print "--- processing file", self.dumpfiles[entity_name]
+        entity = self.schema.get(entity_name)
+        with self.open_dumpfile(self.dumpfiles[entity_name]) as dumpfile:
+
+            self.create_index_writers_if_needed(entity, index_writers)
+
+            self.export_tabledump(entity, dumpfile,
+                nodes_writer, rels_writer, index_writers)
+
+        # pending relations if any
+        if not self.pretend:
+            self.export_rels_csv(writer=rels_csv_writer)
+
+        # close all CSV writers
+        if nodes_csv_writer:
+            nodes_writer.close()
+
+        if rels_csv_writer:
+            rels_writer.close()
+
+        for w in index_writers.itervalues():
+            w.close()
+
+    def export_global(self):
+
+        onodes_filename = self.output_nodes_files.get(MERGE)
         orels_filename = self.output_relations_files.get(MERGED)
 
         nodes_csv_writer, rels_csv_writer = None, None
@@ -168,12 +235,12 @@ class GraphExporter(object):
         if onodes_filename:
             if not self.pretend:
                 nodes_writer = CsvBatchWriter(onodes_filename, self.CSV_BATCH_SIZE)
-                nodes_writer.initialize(self.nodes_csv_fields)
+                nodes_writer.initialize(self.global_nodes_csv_fields)
 
         if orels_filename:
             if not self.pretend:
                 rels_writer = CsvBatchWriter(orels_filename, self.CSV_BATCH_SIZE)
-                rels_writer.initialize(self.rels_csv_fields)
+                rels_writer.initialize(self.global_rels_csv_fields)
 
         index_writers = {}
 
@@ -268,7 +335,7 @@ class GraphExporter(object):
                     raise LookupError
 
                 # add it to the write queue
-                nodes_writer.append(node.get_dict(self.nodes_csv_fields))
+                nodes_writer.append(node.get_dict(self.nodes_csv_fields[entity.name]))
 
                 stats['nodes'] += 1
 
@@ -278,9 +345,11 @@ class GraphExporter(object):
                             node.get_dict(
                                 ['node_id'] + [field.name for field in indexed_fields]))
                         stats['indexed'] += 1
+            else:
+                print "no primary key field"
 
             # add relations if needed
-            new_rels = [rel.get_dict(self.rels_csv_fields)
+            new_rels = [rel.get_dict(self.rels_csv_fields[entity.name])
                 for rel in self.iter_relations(entity, record)]
             rels_writer.extend(new_rels)
             stats['rels'] += len(new_rels)
@@ -361,7 +430,7 @@ class GraphExporter(object):
     def export_rels_csv(self, fp=None, writer=None):
         BATCH_SIZE = 10000
         if not writer and fp:
-            writer = csv.DictWriter(fp, self.rels_csv_fields, dialect="excel-tab")
+            writer = csv.DictWriter(fp, self.global_rels_csv_fields, dialect="excel-tab")
             writer.writeheader()
         size = len(self.relation_list.relation_list)
         print "%d relations to write" % size
