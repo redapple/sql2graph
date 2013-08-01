@@ -8,12 +8,12 @@ COPY(
         l.end_date_year,
         l.label_code,
         lt.name AS type,
-        c.iso_code AS country,
+        a.name AS area,
         l.comment,
         l.ended
     FROM label l
     JOIN label_name ln ON l.name = ln.id
     LEFT JOIN label_type lt ON l.type = lt.id
-    LEFT JOIN country c ON l.country=c.id
+    LEFT JOIN area a ON l.area=a.id
 )
 TO stdout CSV HEADER DELIMITER E'\t';

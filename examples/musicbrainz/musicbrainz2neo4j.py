@@ -16,12 +16,12 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
             Field('mbid', Column('mbid'), index='artists'),
             Field('name', Column('name'), index='artists'),
             Field('type', Column('type'), index='artists'),
-            Field('country', Column('country'), index='artists'),
+            Field('area', Column('area'), index='artists'),
             Field('gender', Column('gender'), index='artists'),
             Field('comment', Column('comment')),
             Field('ended', Column('ended')),
-            #Field('begin_date_year', Column('end_date_year'), index='artists'),
-            #Field('end_date_year', Column('end_date_year'), index='artists'),
+            Field('begin_date_year', Column('begin_date_year'), index='artists'),
+            Field('end_date_year', Column('end_date_year'), index='artists'),
         ]
     ),
     Entity('artist_alias',
@@ -77,8 +77,7 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
             Field('mbid', Column('mbid'), index='releases'),
             Field('name', Column('name'), index='releases'),
             Field('status', Column('status'), index='releases'),
-            Field('country', Column('country')),
-            Field('year', Column('date_year'), index='releases'),
+            Field('barcode', Column('barcode'), index='releases'),
         ],
         relations = [
             Relation(
@@ -91,6 +90,22 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 [Property('rel_type', 'part of'),])
         ]
     ),
+    Entity('release_country',
+        fields = [
+            IntField('pk', Column('pk'), primary_key=True),
+            Field('name', Column('name')),
+            Field('country', Column('country')),
+            Field('year', Column('date_year')),
+        ],
+        relations = [
+            Relation(
+                Reference('release', 'release_fk'),
+                Reference('release_country', 'pk'),
+                [
+                    Property('rel_type', 'released in'),
+                ])
+        ]
+    ),
     Entity('medium',
         fields = [
             IntField('pk', Column('pk'), primary_key=True, index='media'),
@@ -101,12 +116,13 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
         relations = [
             Relation(
                 Reference('release', 'release_fk'),
-                Reference('tracklist', 'tracklist_fk'),
+                Reference('medium', 'pk'),
                 [
-                    Property('rel_type', 'has'),
+                    Property('rel_type', 'released on'),
                     Property('name', Column('name')),
                     Property('format', Column('format')),
-                    Property('position', Column('position')),]
+                    #Property('position', Column('position')),
+                ]
             ),
         ]
     ),
@@ -121,7 +137,9 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
             Relation(
                 Reference('recording', 'pk'),
                 Reference('artist_credit', 'artist_credit_fk'),
-                [Property('rel_type', 'by')]
+                [
+                    Property('rel_type', 'by'),
+                ]
             ),
         ]
     ),
@@ -129,19 +147,22 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
         fields = [
             IntField('pk', Column('pk'), primary_key=True, index='tracks'),
             Field('name', Column('name'), index='tracks'),
+            Field('number', Column('number'), index='tracks'),
             Field('position', Column('position'), index='tracks'),
             Field('length', Column('length'), index='tracks'),
         ],
         relations = [
             Relation(
                 Reference('track', 'pk'),
-                Reference('tracklist', 'tracklist_fk'),
-                [Property('rel_type', 'in')]
+                Reference('recording', 'recording_fk'),
+                [
+                    Property('rel_type', 'is'),
+                ]
             ),
             Relation(
                 Reference('track', 'pk'),
-                Reference('recording', 'recording_fk'),
-                [Property('rel_type', 'is')]
+                Reference('medium', 'medium_fk'),
+                [Property('rel_type', 'appears on')]
             ),
             Relation(
                 Reference('track', 'pk'),
@@ -156,7 +177,7 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
             Field('mbid', Column('mbid'), index='labels'),
             Field('name', Column('name'), index='labels'),
             Field('type', Column('type'), index='labels'),
-            Field('country', Column('country'), index='labels'),
+            Field('area', Column('area'), index='labels'),
             #Field('label_code', Column('label_code'), index='labels'),
             #Field('comment', Column('comment')),
             Field('ended', Column('ended')),
@@ -167,13 +188,10 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
             Relation(
                 Reference('label', 'label_fk', null=True),
                 Reference('release', 'release_fk'),
-                [Property('rel_type', 'released'),
-                Property('catalog', Column('catalog_number'))]),
-        ]
-    ),
-    Entity('tracklist',
-        fields = [
-            IntField('pk', Column('pk'), primary_key=True),
+                [
+                    Property('rel_type', 'released'),
+                    Property('catalog', Column('catalog_number')),
+                ]),
         ]
     ),
     Entity('url',
@@ -190,7 +208,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 Reference('artist', 'artist2_fk'),
                 [
                     Property('rel_type', Column('name')),
-                    # could add begin/end dates as properties
+                    Property('begin', Column('begin_date_year')),
+                    Property('end', Column('end_date_year')),
                 ])
         ]
     ),
@@ -201,7 +220,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 Reference('label', 'label_fk'),
                 [
                     Property('rel_type', Column('name')),
-                    # could add begin/end dates as properties
+                    Property('begin', Column('begin_date_year')),
+                    Property('end', Column('end_date_year')),
                 ])
         ]
     ),
@@ -212,7 +232,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 Reference('label', 'label2_fk'),
                 [
                     Property('rel_type', Column('name')),
-                    # could add begin/end dates as properties
+                    Property('begin', Column('begin_date_year')),
+                    Property('end', Column('end_date_year')),
                 ])
         ]
     ),
@@ -223,7 +244,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 Reference('url', 'url_fk'),
                 [
                     Property('rel_type', Column('name')),
-                    # could add begin/end dates as properties
+                    Property('begin', Column('begin_date_year')),
+                    Property('end', Column('end_date_year')),
                 ])
         ]
     ),
@@ -234,8 +256,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 Reference('url', 'url_fk'),
                 [
                     Property('rel_type', Column('name')),
-                    # could add begin/end dates as properties
-                    Property('short', Column('short_link_phrase')),
+                    Property('begin', Column('begin_date_year')),
+                    Property('end', Column('end_date_year')),
                 ])
         ]
     ),
@@ -244,7 +266,11 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
             Relation(
                 Reference('label', 'label_fk'),
                 Reference('recording', 'recording_fk'),
-                [Property('rel_type', Column('name')),])
+                [
+                    Property('rel_type', Column('name')),
+                    Property('begin', Column('begin_date_year')),
+                    Property('end', Column('end_date_year')),
+                ])
         ]
     ),
 )
