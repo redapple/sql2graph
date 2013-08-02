@@ -59,7 +59,7 @@ tracks=tracks_index.csv
 media=media.csv
 
 [BATCHIMPORT_SETTINGS]
-jar_location=/home/pablito/dev/batch-import/target/batch-import-jar-with-dependencies.jar
-dbfile_location=/home/pablito/bin/neo4j-community-1.9.2/data/graph.db
+jar_location=/path/to/jexp/batch-import/target/batch-import-jar-with-dependencies.jar
+dbfile_location=/path/to/neo4j-community-x.x.x/data/graph.db
 nodes_file=nodes.csv
 relations_file=rels.csv
