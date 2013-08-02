@@ -208,8 +208,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 Reference('artist', 'artist2_fk'),
                 [
                     Property('rel_type', Column('name')),
-                    Property('begin', Column('begin_date_year')),
-                    Property('end', Column('end_date_year')),
+                    Property('year_begin', Column('begin_date_year')),
+                    Property('year_end', Column('end_date_year')),
                 ])
         ]
     ),
@@ -220,8 +220,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 Reference('label', 'label_fk'),
                 [
                     Property('rel_type', Column('name')),
-                    Property('begin', Column('begin_date_year')),
-                    Property('end', Column('end_date_year')),
+                    Property('year_begin', Column('begin_date_year')),
+                    Property('year_end', Column('end_date_year')),
                 ])
         ]
     ),
@@ -232,8 +232,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 Reference('label', 'label2_fk'),
                 [
                     Property('rel_type', Column('name')),
-                    Property('begin', Column('begin_date_year')),
-                    Property('end', Column('end_date_year')),
+                    Property('year_begin', Column('begin_date_year')),
+                    Property('year_end', Column('end_date_year')),
                 ])
         ]
     ),
@@ -244,8 +244,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 Reference('url', 'url_fk'),
                 [
                     Property('rel_type', Column('name')),
-                    Property('begin', Column('begin_date_year')),
-                    Property('end', Column('end_date_year')),
+                    Property('year_begin', Column('begin_date_year')),
+                    Property('year_end', Column('end_date_year')),
                 ])
         ]
     ),
@@ -256,8 +256,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 Reference('url', 'url_fk'),
                 [
                     Property('rel_type', Column('name')),
-                    Property('begin', Column('begin_date_year')),
-                    Property('end', Column('end_date_year')),
+                    Property('year_begin', Column('begin_date_year')),
+                    Property('year_end', Column('end_date_year')),
                 ])
         ]
     ),
@@ -268,8 +268,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
                 Reference('recording', 'recording_fk'),
                 [
                     Property('rel_type', Column('name')),
-                    Property('begin', Column('begin_date_year')),
-                    Property('end', Column('end_date_year')),
+                    Property('year_begin', Column('begin_date_year')),
+                    Property('year_end', Column('end_date_year')),
                 ])
         ]
     ),
@@ -292,15 +292,20 @@ def main():
         print "you must provide a config file"
         sys.exit(0)
 
+    if not config_parser.has_option('TABLE_DUMPS_DIR', 'dir'):
+        print "you must provide TABLE_DUMPS_DIR/dir"
+        sys.exit(0)
+    table_dumps_dir = config_parser.get('TABLE_DUMPS_DIR', 'dir')
+
     if config_parser.has_section('TABLE_DUMPS'):
         dump_tables = dict((
-                (entity, dump_file)
+                (entity, "%s/%s" % (table_dumps_dir, dump_file))
                     for entity, dump_file in config_parser.items('TABLE_DUMPS')
             ))
     else:
         print "no TABLE_DUMPS section"
         raise SystemExit
-
+    print dump_tables
 
     if config_parser.has_option('IMPORT_ORDER', 'order'):
         entity_order = [entity.strip()
@@ -340,11 +345,11 @@ def main():
         exporter.set_output_relations_file(entity=sql2graph.export.MERGED, filename=options.rels_file)
 
     for index_name, index_file in index_files.iteritems():
-        exporter.set_output_indexes_files(entity=index_name, filename=index_file)
+        exporter.set_output_indexes_file(entity=index_name, filename=index_file)
 
-    for entity in entity_order:
-        if dump_tables.get(entity):
-            exporter.feed_dumpfile(entity_name=entity, filename=dump_tables.get(entity))
+    for entity_name in entity_order:
+        if dump_tables.get(entity_name):
+            exporter.feed_dumpfile(entity=entity_name, filename=dump_tables.get(entity_name))
 
     exporter.run()
 
