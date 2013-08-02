@@ -1,10 +1,10 @@
 COPY (
     SELECT
-        a.artist_credit AS artist_credit_fk,
-        a.position,
-        a.artist AS artist_fk,
-        n.name,
-        a.join_phrase
-    FROM artist_credit_name a
-    JOIN artist_name n ON a.name = n.id
+        acn.artist_credit AS artist_credit_fk,
+        acn.position,
+        acn.artist AS artist_fk,
+        an.name,
+        acn.join_phrase
+    FROM artist_credit_name acn
+    JOIN artist_name an ON acn.name = an.id
 ) TO stdout CSV HEADER DELIMITER E'\t';

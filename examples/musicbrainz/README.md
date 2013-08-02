@@ -2,10 +2,10 @@ Importing MusicBrainz data into Neo4J
 =====================================
 
 1) Get MusicBrainz data in your database of choice
-See
+See http://musicbrainz.org/doc/MusicBrainz_Database/Download
 
 I use Lukas Lalisnky's mbslave https://bitbucket.org/lalinsky/mbslave
-(therefor with PostgreSQL)
+(therefore with PostgreSQL)
 
 2) Export MusicBrainz data into simplified table dumps
 (mainly resolving name links)
@@ -32,16 +32,20 @@ Again, I personally use ./mbslave-psql.py
     ...
     bzip2 dumps/*.csv   # optional
 
-3) Edit mb2neo.conf to match where you have the CSV dump files
-  and run sql2graph on these dumps files by adapting mb2neo.conf
+3) Copy mb2neo-simple.conf.default to mb2neo-simple.conf,
+  edit it to match where you have the CSV dump files
+  and run sql2graph on these dumps files
 
-    python musicbrainz2neo4j.py --config mb2neo-simple.conf
+    python musicbrainz2neo4j.py --config mb2neo-simple.conf --nodes nodes.csv --relations rels.csv
 
 The script needs sql2graph module so you probably need to move what's in examples/musicbrainz/
-where appropriate
+where appropriate,
+or use a symbolic link in the examples/musicbrainz folder
+ln -s /path/to/sql2graph/sql2graph sql2graph
+
 
 4) Import the nodes, relations and indexes files into Neo4J using batch-import
 
-    python run_batchimport.py --config mb2neo-simple.conf
+    python /path/to/sql2graph/run_batchimport.py --config mb2neo-simple.conf
 
 **This takes a long time if you import all (or all main) entities.**

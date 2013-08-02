@@ -4,9 +4,11 @@ COPY(
         link_al.id AS pk,
         link_al.entity0 AS artist_fk,
         link_al.entity1 AS label_fk,
+        link.begin_date_year,
+        link.end_date_year,
         link_type.name,
-        link_type.short_link_phrase,
-        link_type.link_phrase,
+        --link_type.long_link_phrase,
+        --link_type.link_phrase,
         link_type.description
     FROM l_artist_label link_al
     JOIN link ON link_al.link=link.id
