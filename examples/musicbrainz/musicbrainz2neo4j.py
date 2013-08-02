@@ -305,7 +305,6 @@ def main():
     else:
         print "no TABLE_DUMPS section"
         raise SystemExit
-    print dump_tables
 
     if config_parser.has_option('IMPORT_ORDER', 'order'):
         entity_order = [entity.strip()
