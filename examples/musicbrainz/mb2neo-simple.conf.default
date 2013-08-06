@@ -1,0 +1,65 @@
+# entity=dump_file
+[TABLE_DUMPS_DIR]
+dir=/path/to/where/you/have/dumps/csv_files
+
+[TABLE_DUMPS]
+artist=export-simple-artist.sql.csv
+artist_alias=export-simple-artist_alias.sql.csv
+artist_credit=export-simple-artist_credit.sql.csv
+artist_credit_name=export-simple-artist_credit_name.sql.csv
+release=export-simple-release.sql.csv
+release_group=export-simple-release_group.sql.csv
+label=export-simple-label.sql.csv
+release_label=export-simple-release_label.sql.csv
+recording=export-simple-recording.sql.csv
+medium=export-simple-medium.sql.csv
+track=export-simple-track.sql.csv
+url=export-simple-url.sql.csv
+link_artist_url=export-simple-link_artist_url.sql.csv
+link_artist_artist=export-simple-link_artist_artist.sql.csv
+link_artist_label=export-simple-link_artist_label.sql.csv
+link_label_label=export-simple-link_label_label.sql.csv
+link_label_url=export-simple-link_label_url.sql.csv
+link_label_recording=export-simple-link_label_recording.sql.csv
+#link_label_release=export-simple-link_label_release.sql.csv
+#link_label_release_group=export-simple-link_label_release_group.sql.csv
+
+[IMPORT_ORDER]
+order=artist,
+    artist_alias,
+    artist_credit,
+    artist_credit_name,
+    label,
+    tracklist,
+    release_group,
+    release,
+    release_label,
+    recording,
+    medium,
+    track,
+    url,
+    link_artist_url,
+    link_artist_artist,
+    link_artist_label,
+    link_label_label,
+    link_label_url,
+    link_label_recording,
+    link_label_release,
+    link_label_release_group
+
+[INDEX_FILES]
+artists=artists_index.csv
+artist_aliases=artist_aliases_index.csv
+artist_credits=artist_credits_index.csv
+labels=labels_index.csv
+releases=releases_index.csv
+release_groups=release_groups_index.csv
+recordings=recordings_index.csv
+tracks=tracks_index.csv
+media=media.csv
+
+[BATCHIMPORT_SETTINGS]
+jar_location=/path/to/jexp/batch-import/target/batch-import-jar-with-dependencies.jar
+dbfile_location=/path/to/neo4j-community-x.x.x/data/graph.db
+nodes_file=nodes.csv
+relations_file=rels.csv

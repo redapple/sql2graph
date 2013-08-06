@@ -1,7 +1,7 @@
 COPY (
     SELECT
-        a.id AS pk,
-        n.name
-    FROM artist_credit a
-    JOIN artist_name n ON a.name=n.id
+        ac.id AS pk,
+        an.name
+    FROM artist_credit ac
+    JOIN artist_name an ON ac.name=an.id
 ) TO stdout CSV HEADER DELIMITER E'\t';

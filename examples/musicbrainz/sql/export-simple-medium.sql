@@ -2,7 +2,6 @@
 COPY(
     SELECT
         m.id AS pk,
-        m.tracklist AS tracklist_fk,
         m.release AS release_fk,
         m.position,
         mf.name AS format,

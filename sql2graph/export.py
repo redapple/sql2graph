@@ -318,7 +318,7 @@ class GraphExporter(object):
         node_id = 0
 
         # read CSV file line by line
-        print self.dialect
+        #print self.dialect
         csvreader = csv.DictReader(fp, dialect=self.dialect)
         for cnt, record in enumerate(csvreader, start=1):
 
