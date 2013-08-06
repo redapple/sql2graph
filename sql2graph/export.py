@@ -10,6 +10,7 @@ import csv
 import traceback
 import sys
 import copy
+import pprint
 
 # ----------------------------------------------------------------------
 MERGED = '***MERGED***'
@@ -104,11 +105,11 @@ class GraphExporter(object):
     def supported_format(self, format):
         return format.lower() in [f.lower() for f in self.SUPPORTED_OUTPUT_FORMATS]
 
-    def feed_dumpfile(self, entity_name, filename, fields=None):
-        self.dumpfiles[entity_name] = filename
+    def feed_dumpfile(self, entity, filename, fields=None):
+        self.dumpfiles[entity] = filename
         if fields:
-            self.dumpfile_fields[entity_name] = fields
-        self.entity_order.append(entity_name)
+            self.dumpfile_fields[entity] = fields
+        self.entity_order.append(entity)
 
     def set_output_nodes_file(self, entity, filename):
         self.output_nodes_files[entity] = filename
@@ -135,9 +136,12 @@ class GraphExporter(object):
         node_properties = []
 
         for entity_name, entity in self.schema.iteritems():
+            print entity_name, entity
             if entity_name not in self.entity_order:
                 continue
-            if entity.fields:
+            if not entity.fields:
+                print "no fields for %s" % entity_name
+            else:
                 self.nodes_csv_fields[entity_name] = copy.copy(fields_begin)
                 for field in entity.fields:
                     # the following could be used to add a column type to CSV header fields
@@ -149,7 +153,9 @@ class GraphExporter(object):
 
                     node_properties.append(field.name)
                     self.nodes_csv_fields[entity_name].append(field.name)
-            self.nodes_csv_fields[entity_name] = set(self.nodes_csv_fields[entity_name])
+                self.nodes_csv_fields[entity_name] = set(self.nodes_csv_fields[entity_name])
+        print "nodes_csv_fields:"
+        pprint.pprint(self.nodes_csv_fields)
         self.global_nodes_csv_fields = fields_begin + list(set(node_properties) - set(fields_begin))
 
     def read_rels_csv_fields(self):
@@ -163,7 +169,9 @@ class GraphExporter(object):
                 for rel in entity.relations:
                    rels_properties.extend([prop.name for prop in rel.properties])
                    self.rels_csv_fields[entity_name].extend([prop.name for prop in rel.properties])
-            self.rels_csv_fields[entity_name] = set(self.rels_csv_fields[entity_name])
+            self.rels_csv_fields[entity_name] = fields_begin + list(
+                set(self.rels_csv_fields[entity_name]) - set(fields_begin))
+
         self.global_rels_csv_fields = fields_begin + list(
             set(rels_properties) - set(fields_begin))
 
@@ -176,7 +184,7 @@ class GraphExporter(object):
             self.export_entity(entity_name)
 
     def export_entity(self, entity_name):
-
+        print "export_entity: %s" % entity_name
         if not self.dumpfiles.get(entity_name) or not self.schema.get(entity_name):
             if self.DEBUG:
                 print "no dump file or not schema configured for entity", entity_name
@@ -184,21 +192,20 @@ class GraphExporter(object):
 
         onodes_filename = self.output_nodes_files.get(entity_name)
         orels_filename = self.output_relations_files.get(entity_name)
-
+        print onodes_filename, orels_filename
         nodes_csv_writer, rels_csv_writer = None, None
 
-        if onodes_filename:
+        if onodes_filename and self.nodes_csv_fields.get(entity_name):
             if not self.pretend:
-                nodes_writer = CsvBatchWriter(onodes_filename, self.CSV_BATCH_SIZE)
-                nodes_writer.initialize(self.nodes_csv_fields[entity_name])
+                nodes_csv_writer = CsvBatchWriter(onodes_filename, self.CSV_BATCH_SIZE)
+                nodes_csv_writer.initialize(self.nodes_csv_fields[entity_name])
 
-        if orels_filename:
+        if orels_filename and self.rels_csv_fields.get(entity_name):
             if not self.pretend:
-                rels_writer = CsvBatchWriter(orels_filename, self.CSV_BATCH_SIZE)
-                rels_writer.initialize(self.rels_csv_fields[entity_name])
+                rels_csv_writer = CsvBatchWriter(orels_filename, self.CSV_BATCH_SIZE)
+                rels_csv_writer.initialize(self.rels_csv_fields[entity_name])
 
         index_writers = {}
-
 
 
         if self.DEBUG:
@@ -209,7 +216,7 @@ class GraphExporter(object):
             self.create_index_writers_if_needed(entity, index_writers)
 
             self.export_tabledump(entity, dumpfile,
-                nodes_writer, rels_writer, index_writers)
+                nodes_csv_writer, rels_csv_writer, index_writers)
 
         # pending relations if any
         if not self.pretend:
@@ -217,10 +224,10 @@ class GraphExporter(object):
 
         # close all CSV writers
         if nodes_csv_writer:
-            nodes_writer.close()
+            nodes_csv_writer.close()
 
         if rels_csv_writer:
-            rels_writer.close()
+            rels_csv_writer.close()
 
         for w in index_writers.itervalues():
             w.close()
@@ -324,9 +331,11 @@ class GraphExporter(object):
 
             node = None
 
-            # create a new node
-            primary_key_field = entity.get_primary_key_field()
-            if primary_key_field:
+            if nodes_writer:
+
+              # create a new node
+              primary_key_field = entity.get_primary_key_field()
+              if primary_key_field:
 
                 node = graph.Node(record, entity)
                 node_id = self.node_list.add_node(node)
@@ -345,14 +354,16 @@ class GraphExporter(object):
                             node.get_dict(
                                 ['node_id'] + [field.name for field in indexed_fields]))
                         stats['indexed'] += 1
-            else:
+              else:
                 print "no primary key field"
+                raise RuntimeError
 
-            # add relations if needed
-            new_rels = [rel.get_dict(self.rels_csv_fields[entity.name])
-                for rel in self.iter_relations(entity, record)]
-            rels_writer.extend(new_rels)
-            stats['rels'] += len(new_rels)
+            if rels_writer:
+                # add relations if needed
+                new_rels = [rel.get_dict(self.rels_csv_fields[entity.name])
+                    for rel in self.iter_relations(entity, record)]
+                rels_writer.extend(new_rels)
+                stats['rels'] += len(new_rels)
 
             # hint to gc; there's surely something prettier
             if node:
@@ -361,8 +372,8 @@ class GraphExporter(object):
 
             if self.DEBUG:
                 if not (cnt % PRINT_FREQUENCY):
-                    print "\r line %8d - nodes(%8d), rels(%8d), idx(%8d) -- last node ID %d" % (
-                        cnt, stats['nodes'], stats['rels'], stats['indexed'], node_id),
+                    print "\r %32s: line %8d - nodes(%8d), rels(%8d), idx(%8d) -- last node ID %d" % (
+                        entity.name, cnt, stats['nodes'], stats['rels'], stats['indexed'], node_id),
                     sys.stdout.flush()
 
         if self.DEBUG:

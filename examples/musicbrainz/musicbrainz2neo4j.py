@@ -337,17 +337,19 @@ def main():
     exporter = sql2graph.export.GraphExporter(
         schema=MUSICBRAINZ_SIMPLE_SCHEMA, format='neo4j')
 
-    if options.nodes_file:
-        exporter.set_output_nodes_file(entity=sql2graph.export.MERGED, filename=options.nodes_file)
+#    if options.nodes_file:
+#        exporter.set_output_nodes_file(entity=sql2graph.export.MERGED, filename=options.nodes_file)
 
-    if options.rels_file:
-        exporter.set_output_relations_file(entity=sql2graph.export.MERGED, filename=options.rels_file)
+#    if options.rels_file:
+#        exporter.set_output_relations_file(entity=sql2graph.export.MERGED, filename=options.rels_file)
 
-    for index_name, index_file in index_files.iteritems():
-        exporter.set_output_indexes_file(entity=index_name, filename=index_file)
+#    for index_name, index_file in index_files.iteritems():
+#        exporter.set_output_indexes_file(entity=index_name, filename=index_file)
 
     for entity_name in entity_order:
         if dump_tables.get(entity_name):
+            exporter.set_output_nodes_file(entity=entity_name, filename="nodes_%s.csv" % entity_name)
+            exporter.set_output_relations_file(entity=entity_name, filename="rels_%s.csv" % entity_name)
             exporter.feed_dumpfile(entity=entity_name, filename=dump_tables.get(entity_name))
 
     exporter.run()
