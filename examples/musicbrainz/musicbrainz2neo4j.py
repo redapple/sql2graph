@@ -12,8 +12,8 @@ from sql2graph.schema import Field, IntField, Relation, Reference, Column, Entit
 MUSICBRAINZ_SIMPLE_SCHEMA = (
     Entity('artist',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True, index='artists'),
-            Field('mbid', Column('mbid'), index='artists'),
+            IntField('pk:int', Column('pk'), primary_key=True, index='artists'),
+            Field('mbid:string:artists', Column('mbid'), index='artists'),
             Field('name', Column('name'), index='artists'),
             Field('type', Column('type'), index='artists'),
             Field('area', Column('area'), index='artists'),
@@ -26,7 +26,7 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('artist_alias',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True, index='artist_aliases'),
+            IntField('pk:int', Column('pk'), primary_key=True, index='artist_aliases'),
             Field('name', Column('name'), index='artist_aliases'),
             #Field('locale',  Column('locale')),
             Field('type', Column('type'), index='artist_aliases'),
@@ -52,14 +52,14 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('artist_credit',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True, index='artist_credits'),
+            IntField('pk:int', Column('pk'), primary_key=True, index='artist_credits'),
             Field('name', Column('name'), index='artist_credits'),
         ]
     ),
     Entity('release_group',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True, index='release_groups'),
-            Field('mbid', Column('mbid'), index='release_groups'),
+            IntField('pk:int', Column('pk'), primary_key=True, index='release_groups'),
+            Field('mbid:string:release_groups', Column('mbid'), index='release_groups'),
             Field('name', Column('name'), index='release_groups'),
             Field('type', Column('type'), index='release_groups'),
             Field('comment', Column('comment')),
@@ -73,8 +73,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('release',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True, index='releases'),
-            Field('mbid', Column('mbid'), index='releases'),
+            IntField('pk:int', Column('pk'), primary_key=True, index='releases'),
+            Field('mbid:string:releases', Column('mbid'), index='releases'),
             Field('name', Column('name'), index='releases'),
             Field('status', Column('status'), index='releases'),
             Field('barcode', Column('barcode'), index='releases'),
@@ -92,7 +92,7 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('release_country',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True),
+            IntField('pk:int', Column('pk'), primary_key=True),
             Field('name', Column('name')),
             Field('country', Column('country')),
             Field('year', Column('date_year')),
@@ -108,7 +108,7 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('medium',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True, index='media'),
+            IntField('pk:int', Column('pk'), primary_key=True, index='media'),
             Field('position', Column('position'), index='media'),
             Field('name', Column('name'), index='media'),
             Field('format', Column('format'), index='media'),
@@ -128,8 +128,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('recording',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True, index='recordings'),
-            Field('mbid', Column('mbid'), index='recordings'),
+            IntField('pk:int', Column('pk'), primary_key=True, index='recordings'),
+            Field('mbid:string:recordings', Column('mbid'), index='recordings'),
             Field('name', Column('name'), index='recordings'),
             Field('length', Column('length'), index='recordings'),
         ],
@@ -145,8 +145,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('track',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True, index='tracks'),
-            Field('name', Column('name'), index='tracks'),
+            IntField('pk:int', Column('pk'), primary_key=True, index='tracks'),
+            Field('name:string:tracks', Column('name'), index='tracks'),
             Field('number', Column('number'), index='tracks'),
             Field('position', Column('position'), index='tracks'),
             Field('length', Column('length'), index='tracks'),
@@ -173,8 +173,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('label',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True, index='labels'),
-            Field('mbid', Column('mbid'), index='labels'),
+            IntField('pk:int', Column('pk'), primary_key=True, index='labels'),
+            Field('mbid:string:labels', Column('mbid'), index='labels'),
             Field('name', Column('name'), index='labels'),
             Field('type', Column('type'), index='labels'),
             Field('area', Column('area'), index='labels'),
@@ -196,9 +196,9 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('url',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True),
-            Field('mbid', Column('mbid')),
-            Field('name', Column('url')),   # lets not add a new property
+            IntField('pk:int', Column('pk'), primary_key=True),
+            Field('mbid:string:urls', Column('mbid')),
+            Field('url', Column('url')),   # lets not add a new property
         ]
     ),
     Entity('link_artist_artist',
