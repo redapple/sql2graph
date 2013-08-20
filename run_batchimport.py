@@ -71,13 +71,6 @@ def main():
         relations_files = ["%s%s.csv" % (relations_files_prefix, e) for e in entity_order if e in dumped_entities]
         args.append(','.join(relations_files))
 
-    if config_parser.has_section('INDEX_FILES'):
-        for index_name, index_file in config_parser.items('INDEX_FILES'):
-            args.append('node_index')
-            args.append(index_name)
-            args.append('fulltext')
-            args.append(index_file)
-
     # check what's being executed
     print " ".join(args)
     os.execvp("java", args)

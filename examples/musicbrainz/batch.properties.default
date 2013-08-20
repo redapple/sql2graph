@@ -1,0 +1,10 @@
+use_memory_mapped_buffers=true
+neostore.nodestore.db.mapped_memory=300M
+neostore.relationshipstore.db.mapped_memory=600M
+neostore.propertystore.db.mapped_memory=1000M
+neostore.propertystore.db.strings.mapped_memory=250M
+neostore.propertystore.db.arrays.mapped_memory=0M
+neostore.propertystore.db.index.keys.mapped_memory=30M
+neostore.propertystore.db.index.mapped_memory=30M
+batch_import.node_index.mbid=exact
+batch_import.node_index.mb=fulltext

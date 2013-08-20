@@ -12,26 +12,26 @@ from sql2graph.schema import Field, IntField, Relation, Reference, Column, Entit
 MUSICBRAINZ_SIMPLE_SCHEMA = (
     Entity('artist',
         fields = [
-            IntField('pk:int', Column('pk'), primary_key=True, index='artists'),
-            Field('mbid:string:artists', Column('mbid'), index='artists'),
-            Field('name', Column('name'), index='artists'),
-            Field('type', Column('type'), index='artists'),
-            Field('area', Column('area'), index='artists'),
-            Field('gender', Column('gender'), index='artists'),
+            IntField('pk', Column('pk'), primary_key=True),
+            Field('mbid:string:mbid', Column('mbid')),
+            Field('name', Column('name')),
+            Field('type', Column('type')),
+            Field('area', Column('area')),
+            Field('gender', Column('gender')),
             Field('comment', Column('comment')),
             Field('ended', Column('ended')),
-            Field('begin_date_year', Column('begin_date_year'), index='artists'),
-            Field('end_date_year', Column('end_date_year'), index='artists'),
+            Field('begin_date_year', Column('begin_date_year')),
+            Field('end_date_year', Column('end_date_year')),
         ]
     ),
     Entity('artist_alias',
         fields = [
-            IntField('pk:int', Column('pk'), primary_key=True, index='artist_aliases'),
-            Field('name', Column('name'), index='artist_aliases'),
+            IntField('pk', Column('pk'), primary_key=True),
+            Field('name', Column('name')),
             #Field('locale',  Column('locale')),
-            Field('type', Column('type'), index='artist_aliases'),
-            #Field('begin_date_year', Column('end_date_year'), index='artist_aliases'),
-            #Field('end_date_year', Column('end_date_year'), index='artist_aliases'),
+            Field('type', Column('type')),
+            #Field('begin_date_year', Column('end_date_year')),
+            #Field('end_date_year', Column('end_date_year')),
         ],
         relations = [
             Relation(Reference('artist', 'artist_fk'),
@@ -52,16 +52,16 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('artist_credit',
         fields = [
-            IntField('pk:int', Column('pk'), primary_key=True, index='artist_credits'),
-            Field('name', Column('name'), index='artist_credits'),
+            IntField('pk', Column('pk'), primary_key=True),
+            Field('name', Column('name')),
         ]
     ),
     Entity('release_group',
         fields = [
-            IntField('pk:int', Column('pk'), primary_key=True, index='release_groups'),
-            Field('mbid:string:release_groups', Column('mbid'), index='release_groups'),
-            Field('name', Column('name'), index='release_groups'),
-            Field('type', Column('type'), index='release_groups'),
+            IntField('pk', Column('pk'), primary_key=True),
+            Field('mbid:string:mbid', Column('mbid')),
+            Field('name', Column('name')),
+            Field('type', Column('type')),
             Field('comment', Column('comment')),
         ],
         relations = [
@@ -73,11 +73,11 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('release',
         fields = [
-            IntField('pk:int', Column('pk'), primary_key=True, index='releases'),
-            Field('mbid:string:releases', Column('mbid'), index='releases'),
-            Field('name', Column('name'), index='releases'),
-            Field('status', Column('status'), index='releases'),
-            Field('barcode', Column('barcode'), index='releases'),
+            IntField('pk', Column('pk'), primary_key=True),
+            Field('mbid:string:mbid', Column('mbid')),
+            Field('name', Column('name')),
+            Field('status', Column('status')),
+            Field('barcode', Column('barcode')),
         ],
         relations = [
             Relation(
@@ -92,7 +92,7 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('release_country',
         fields = [
-            IntField('pk:int', Column('pk'), primary_key=True),
+            IntField('pk', Column('pk'), primary_key=True),
             Field('name', Column('name')),
             Field('country', Column('country')),
             Field('year', Column('date_year')),
@@ -108,10 +108,10 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('medium',
         fields = [
-            IntField('pk:int', Column('pk'), primary_key=True, index='media'),
-            Field('position', Column('position'), index='media'),
-            Field('name', Column('name'), index='media'),
-            Field('format', Column('format'), index='media'),
+            IntField('pk', Column('pk'), primary_key=True),
+            Field('position', Column('position')),
+            Field('name', Column('name')),
+            Field('format', Column('format')),
         ],
         relations = [
             Relation(
@@ -128,10 +128,10 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('recording',
         fields = [
-            IntField('pk:int', Column('pk'), primary_key=True, index='recordings'),
-            Field('mbid:string:recordings', Column('mbid'), index='recordings'),
-            Field('name', Column('name'), index='recordings'),
-            Field('length', Column('length'), index='recordings'),
+            IntField('pk', Column('pk'), primary_key=True),
+            Field('mbid:string:mbid', Column('mbid')),
+            Field('name', Column('name')),
+            Field('length', Column('length')),
         ],
         relations = [
             Relation(
@@ -145,11 +145,12 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('track',
         fields = [
-            IntField('pk:int', Column('pk'), primary_key=True, index='tracks'),
-            Field('name:string:tracks', Column('name'), index='tracks'),
-            Field('number', Column('number'), index='tracks'),
-            Field('position', Column('position'), index='tracks'),
-            Field('length', Column('length'), index='tracks'),
+            IntField('pk', Column('pk'), primary_key=True),
+            Field('mbid:string:mbid', Column('mbid')),
+            Field('name', Column('name')),
+            Field('number', Column('number')),
+            Field('position', Column('position')),
+            Field('length', Column('length')),
         ],
         relations = [
             Relation(
@@ -173,8 +174,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('label',
         fields = [
-            IntField('pk:int', Column('pk'), primary_key=True, index='labels'),
-            Field('mbid:string:labels', Column('mbid'), index='labels'),
+            IntField('pk', Column('pk'), primary_key=True),
+            Field('mbid:string:mbid', Column('mbid')),
             Field('name', Column('name'), index='labels'),
             Field('type', Column('type'), index='labels'),
             Field('area', Column('area'), index='labels'),
@@ -196,8 +197,8 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('url',
         fields = [
-            IntField('pk:int', Column('pk'), primary_key=True),
-            Field('mbid:string:urls', Column('mbid')),
+            IntField('pk', Column('pk'), primary_key=True),
+            Field('mbid:string:mbid', Column('mbid')),
             Field('url', Column('url')),   # lets not add a new property
         ]
     ),
@@ -313,18 +314,6 @@ def main():
         print "no IMPORT_ORDER/order"
         raise SystemExit
 
-    if config_parser.has_section('INDEX_FILES'):
-        index_files = dict((
-                (index_name, index_file)
-                    for index_name, index_file in config_parser.items('INDEX_FILES')
-            ))
-        #print "--- Index files"
-        #print index_files
-    else:
-        print "no INDEX_FILES section"
-        index_files = None
-
-
 
     # check if all dump files exist
     for entity in entity_order:
@@ -333,18 +322,8 @@ def main():
                 print "file %s does not exist" % dump_tables.get(entity)
                 raise RuntimeError
 
-
     exporter = sql2graph.export.GraphExporter(
         schema=MUSICBRAINZ_SIMPLE_SCHEMA, format='neo4j')
-
-#    if options.nodes_file:
-#        exporter.set_output_nodes_file(entity=sql2graph.export.MERGED, filename=options.nodes_file)
-
-#    if options.rels_file:
-#        exporter.set_output_relations_file(entity=sql2graph.export.MERGED, filename=options.rels_file)
-
-#    for index_name, index_file in index_files.iteritems():
-#        exporter.set_output_indexes_file(entity=index_name, filename=index_file)
 
     for entity_name in entity_order:
         if dump_tables.get(entity_name):

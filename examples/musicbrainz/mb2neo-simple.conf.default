@@ -10,17 +10,17 @@ artist_credit_name=export-simple-artist_credit_name.sql.csv
 release=export-simple-release.sql.csv
 release_group=export-simple-release_group.sql.csv
 label=export-simple-label.sql.csv
-release_label=export-simple-release_label.sql.csv
-recording=export-simple-recording.sql.csv
-medium=export-simple-medium.sql.csv
-track=export-simple-track.sql.csv
-url=export-simple-url.sql.csv
-link_artist_url=export-simple-link_artist_url.sql.csv
+#release_label=export-simple-release_label.sql.csv
+#recording=export-simple-recording.sql.csv
+#medium=export-simple-medium.sql.csv
+#track=export-simple-track.sql.csv
+#url=export-simple-url.sql.csv
+#link_artist_url=export-simple-link_artist_url.sql.csv
 link_artist_artist=export-simple-link_artist_artist.sql.csv
 link_artist_label=export-simple-link_artist_label.sql.csv
 link_label_label=export-simple-link_label_label.sql.csv
-link_label_url=export-simple-link_label_url.sql.csv
-link_label_recording=export-simple-link_label_recording.sql.csv
+#link_label_url=export-simple-link_label_url.sql.csv
+#link_label_recording=export-simple-link_label_recording.sql.csv
 #link_label_release=export-simple-link_label_release.sql.csv
 #link_label_release_group=export-simple-link_label_release_group.sql.csv
 
@@ -30,7 +30,6 @@ order=artist,
     artist_credit,
     artist_credit_name,
     label,
-    tracklist,
     release_group,
     release,
     release_label,
@@ -63,3 +62,5 @@ jar_location=/path/to/jexp/batch-import/target/batch-import-jar-with-dependencie
 dbfile_location=/path/to/neo4j-community-x.x.x/data/graph.db
 nodes_file=nodes.csv
 relations_file=rels.csv
+nodes_file_prefix=nodes_
+relations_file_prefix=rels_
