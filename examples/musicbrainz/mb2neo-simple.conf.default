@@ -3,6 +3,9 @@
 dir=/path/to/where/you/have/dumps/csv_files
 
 [TABLE_DUMPS]
+# main entities
+area=export-simple-area.sql.csv
+area_alias=export-simple-area_alias.sql.csv
 artist=export-simple-artist.sql.csv
 artist_alias=export-simple-artist_alias.sql.csv
 artist_credit=export-simple-artist_credit.sql.csv
@@ -10,22 +13,61 @@ artist_credit_name=export-simple-artist_credit_name.sql.csv
 release=export-simple-release.sql.csv
 release_group=export-simple-release_group.sql.csv
 label=export-simple-label.sql.csv
-#release_label=export-simple-release_label.sql.csv
-#recording=export-simple-recording.sql.csv
-#medium=export-simple-medium.sql.csv
-#track=export-simple-track.sql.csv
-#url=export-simple-url.sql.csv
-#link_artist_url=export-simple-link_artist_url.sql.csv
+release_label=export-simple-release_label.sql.csv
+recording=export-simple-recording.sql.csv
+medium=export-simple-medium.sql.csv
+track=export-simple-track.sql.csv
+url=export-simple-url.sql.csv
+work=export-simple-work.sql.csv
+# link_area_*
+link_area_area=export-simple-link_area_area.sql.csv
+link_area_artist=export-simple-link_area_artist.sql.csv
+link_area_label=export-simple-link_area_label.sql.csv
+link_area_work=export-simple-link_area_work.sql.csv
+link_area_url=export-simple-link_area_url.sql.csv
+link_area_recording=export-simple-link_area_recording.sql.csv
+link_area_release=export-simple-link_area_release.sql.csv
+link_area_release_group=export-simple-link_area_release_group.sql.csv
+# link_artist_*
 link_artist_artist=export-simple-link_artist_artist.sql.csv
 link_artist_label=export-simple-link_artist_label.sql.csv
+link_artist_recording=export-simple-link_artist_recording.sql.csv
+link_artist_release=export-simple-link_artist_release.sql.csv
+link_artist_release_group=export-simple-link_artist_release_group.sql.csv
+link_artist_url=export-simple-link_artist_url.sql.csv
+link_artist_work=export-simple-link_artist_work.sql.csv
+# link_label_*
 link_label_label=export-simple-link_label_label.sql.csv
-#link_label_url=export-simple-link_label_url.sql.csv
-#link_label_recording=export-simple-link_label_recording.sql.csv
-#link_label_release=export-simple-link_label_release.sql.csv
-#link_label_release_group=export-simple-link_label_release_group.sql.csv
+link_label_recording=export-simple-link_label_recording.sql.csv
+link_label_release=export-simple-link_label_release.sql.csv
+link_label_release_group=export-simple-link_label_release_group.sql.csv
+link_label_url=export-simple-link_label_url.sql.csv
+link_label_work=export-simple-link_label_work.sql.csv
+# link_recording_*
+link_recording_recording=export-simple-link_recording_recording.sql.csv
+link_recording_release=export-simple-link_recording_release.sql.csv
+link_recording_release_group=export-simple-link_recording_release_group.sql.csv
+link_recording_url=export-simple-link_recording_url.sql.csv
+link_recording_work=export-simple-link_recording_work.sql.csv
+# link_release_*
+link_release_release=export-simple-link_release_release.sql.csv
+link_release_release_group=export-simple-link_release_release_group.sql.csv
+link_release_url=export-simple-link_release_url.sql.csv
+link_release_work=export-simple-link_release_work.sql.csv
+# link_release_group_*
+link_release_group_release_group=export-simple-link_release_group_release_group.sql.csv
+link_release_group_url=export-simple-link_release_group_url.sql.csv
+link_release_group_work=export-simple-link_release_group_work.sql.csv
+# link_url_*
+link_url_url=export-simple-link_url_url.sql.csv
+link_url_work=export-simple-link_url_work.sql.csv
+# link_work_*
+link_work_work=export-simple-link_work_work.sql.csv
 
 [IMPORT_ORDER]
-order=artist,
+order=area,
+    area_alias,
+    artist,
     artist_alias,
     artist_credit,
     artist_credit_name,
@@ -37,30 +79,46 @@ order=artist,
     medium,
     track,
     url,
-    link_artist_url,
+    work,
+    link_area_area,
+    link_area_artist,
+    link_area_label,
+    link_area_work,
+    link_area_url,
+    link_area_recording,
+    link_area_release,
+    link_area_release_group,
     link_artist_artist,
     link_artist_label,
+    link_artist_recording,
+    link_artist_release,
+    link_artist_release_group,
+    link_artist_url,
+    link_artist_work,
     link_label_label,
-    link_label_url,
     link_label_recording,
     link_label_release,
-    link_label_release_group
-
-[INDEX_FILES]
-artists=artists_index.csv
-artist_aliases=artist_aliases_index.csv
-artist_credits=artist_credits_index.csv
-labels=labels_index.csv
-releases=releases_index.csv
-release_groups=release_groups_index.csv
-recordings=recordings_index.csv
-tracks=tracks_index.csv
-media=media.csv
+    link_label_release_group,
+    link_label_url,
+    link_label_work,
+    link_recording_recording,
+    link_recording_release,
+    link_recording_release_group,
+    link_recording_url,
+    link_recording_work,
+    link_release_release,
+    link_release_release_group,
+    link_release_url,
+    link_release_work,
+    link_release_group_release_group,
+    link_release_group_url,
+    link_release_group_work,
+    link_url_url,
+    link_url_work
+    link_work_work
 
 [BATCHIMPORT_SETTINGS]
 jar_location=/path/to/jexp/batch-import/target/batch-import-jar-with-dependencies.jar
 dbfile_location=/path/to/neo4j-community-x.x.x/data/graph.db
-nodes_file=nodes.csv
-relations_file=rels.csv
 nodes_file_prefix=nodes_
 relations_file_prefix=rels_
