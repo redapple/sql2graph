@@ -6,6 +6,7 @@
 import graph
 import schema
 import bz2
+import gzip
 import csv
 import traceback
 import sys
@@ -463,5 +464,7 @@ class GraphExporter(object):
     def open_dumpfile(cls, filename):
         if filename.endswith(('bz2',)):
             return bz2.BZ2File(filename, 'rb')
+        elif filename.endswith(('gz',)):
+            gzip.GzipFile(filename, 'rb')
         else:
             return open(filename, 'rb')
