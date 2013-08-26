@@ -51,6 +51,8 @@ def main():
 
     args.append('-Xmx1G')
 
+    args.append('-Dfile.encoding=UTF-8')
+
     if config_parser.has_option('BATCHIMPORT_SETTINGS', 'jar_location'):
         args.append('-jar')
         args.append(config_parser.get('BATCHIMPORT_SETTINGS', 'jar_location'))
@@ -63,12 +65,14 @@ def main():
     dumped_entities = dump_tables.keys()
     if config_parser.has_option('BATCHIMPORT_SETTINGS', 'nodes_file_prefix'):
         nodes_files_prefix = config_parser.get('BATCHIMPORT_SETTINGS', 'nodes_file_prefix')
-        nodes_files = ["%s%s.csv" % (nodes_files_prefix, e) for e in entity_order if e in dumped_entities]
+        nodes_files_suffix = config_parser.get('BATCHIMPORT_SETTINGS', 'nodes_file_suffix')
+        nodes_files = ["%s%s%s" % (nodes_files_prefix, e, nodes_files_suffix) for e in entity_order if e in dumped_entities]
         args.append(','.join(nodes_files))
         
     if config_parser.has_option('BATCHIMPORT_SETTINGS', 'relations_file_prefix'):
         relations_files_prefix = config_parser.get('BATCHIMPORT_SETTINGS', 'relations_file_prefix')
-        relations_files = ["%s%s.csv" % (relations_files_prefix, e) for e in entity_order if e in dumped_entities]
+        relations_files_suffix = config_parser.get('BATCHIMPORT_SETTINGS', 'relations_file_suffix')
+        relations_files = ["%s%s%s" % (relations_files_prefix, e, relations_files_suffix) for e in entity_order if e in dumped_entities]
         args.append(','.join(relations_files))
 
     # check what's being executed
