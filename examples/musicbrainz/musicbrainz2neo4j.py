@@ -429,8 +429,7 @@ def main():
     for entity in entity_order:
         if dump_tables.get(entity):
             if not os.path.isfile(dump_tables.get(entity)):
-                print "file %s does not exist" % dump_tables.get(entity)
-                raise RuntimeError
+                raise RuntimeError("file %s does not exist" % dump_tables.get(entity))
 
     exporter = sql2graph.export.GraphExporter(
         schema=MUSICBRAINZ_SIMPLE_SCHEMA, format='neo4j')
@@ -441,7 +440,7 @@ def main():
             exporter.set_output_relations_file(entity=entity_name, filename="rels_%s.csv" % entity_name)
             exporter.feed_dumpfile(entity=entity_name, filename=dump_tables.get(entity_name))
 
-    exporter.run()
+    exporter.run(nodes=False)
 
 
 if __name__ == '__main__':

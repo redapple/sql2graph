@@ -120,10 +120,10 @@ class GraphExporter(object):
     def set_output_indexes_file(self, entity, filename):
         self.output_indexes_files[entity] = filename
 
-    def run(self):
+    def run(self, nodes=True, rels=True):
         self.read_schema()
         #self.step_set_CSV_header_fields()
-        self.export()
+        self.export(nodes, rels)
 
     def read_schema(self):
         self.read_nodes_csv_fields()
@@ -175,15 +175,15 @@ class GraphExporter(object):
         self.global_rels_csv_fields = fields_begin + list(
             set(rels_properties) - set(fields_begin))
 
-    def export(self):
+    def export(self, nodes=True, rels=True):
         """
         Read dump files and write nodes and relations at the same time
         """
 
         for entity_name in self.entity_order:
-            self.export_entity(entity_name)
+            self.export_entity(entity_name, nodes, rels)
 
-    def export_entity(self, entity_name):
+    def export_entity(self, entity_name, nodes=True, rels=True):
         print "export_entity: %s" % entity_name
         if not self.dumpfiles.get(entity_name) or not self.schema.get(entity_name):
             if self.DEBUG:
@@ -192,28 +192,27 @@ class GraphExporter(object):
 
         onodes_filename = self.output_nodes_files.get(entity_name)
         orels_filename = self.output_relations_files.get(entity_name)
-        print onodes_filename, orels_filename
+        #print onodes_filename, orels_filename
         nodes_csv_writer, rels_csv_writer = None, None
 
         if onodes_filename and self.nodes_csv_fields.get(entity_name):
-            if not self.pretend:
+            if not self.pretend and nodes:
                 nodes_csv_writer = CsvBatchWriter(onodes_filename, self.CSV_BATCH_SIZE)
                 nodes_csv_writer.initialize(self.nodes_csv_fields[entity_name])
 
         if orels_filename and self.rels_csv_fields.get(entity_name):
-            if not self.pretend:
+            if not self.pretend and rels:
                 rels_csv_writer = CsvBatchWriter(orels_filename, self.CSV_BATCH_SIZE)
                 rels_csv_writer.initialize(self.rels_csv_fields[entity_name])
 
         index_writers = {}
-
 
         if self.DEBUG:
             print "--- processing file", self.dumpfiles[entity_name]
         entity = self.schema.get(entity_name)
         with self.open_dumpfile(self.dumpfiles[entity_name]) as dumpfile:
 
-            self.create_index_writers_if_needed(entity, index_writers)
+            #self.create_index_writers_if_needed(entity, index_writers)
 
             self.export_tabledump(entity, dumpfile,
                 nodes_csv_writer, rels_csv_writer, index_writers)
@@ -327,15 +326,14 @@ class GraphExporter(object):
         # read CSV file line by line
         #print self.dialect
         csvreader = csv.DictReader(fp, dialect=self.dialect)
+        cnt=0
         for cnt, record in enumerate(csvreader, start=1):
 
             node = None
 
-            if nodes_writer:
-
-              # create a new node
-              primary_key_field = entity.get_primary_key_field()
-              if primary_key_field:
+            # create a new node
+            primary_key_field = entity.get_primary_key_field()
+            if primary_key_field:
 
                 node = graph.Node(record, entity)
                 node_id = self.node_list.add_node(node)
@@ -343,8 +341,9 @@ class GraphExporter(object):
                     # FIXME: find something better
                     raise LookupError
 
-                # add it to the write queue
-                nodes_writer.append(node.get_dict(self.nodes_csv_fields[entity.name]))
+                if nodes_writer:
+                    # add it to the write queue
+                    nodes_writer.append(node.get_dict(self.nodes_csv_fields[entity.name]))
 
                 stats['nodes'] += 1
 
@@ -354,9 +353,8 @@ class GraphExporter(object):
                             node.get_dict(
                                 ['node_id'] + [field.name for field in indexed_fields]))
                         stats['indexed'] += 1
-              else:
-                print "no primary key field"
-                raise RuntimeError
+            #else:
+                #raise RuntimeError("no primary key field for entity %s" % entity.name)
 
             if rels_writer:
                 # add relations if needed
