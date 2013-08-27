@@ -5,7 +5,7 @@ COPY(
         w.id AS pk,
         w.gid AS "mbid:string:mbid",
         wname.name AS "name:string:mb",
-        wtype.name AS "type:string:mb",
+        wtype.name AS "etype:string:mb",
         w.comment
     FROM work w
     JOIN work_name wname ON w.name=wname.id

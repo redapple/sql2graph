@@ -8,7 +8,7 @@ COPY(
         l.begin_date_year,
         l.end_date_year,
         l.label_code,
-        lt.name AS "type:string:mb",
+        lt.name AS "etype:string:mb",
         a.name AS area,
         l.comment,
         l.ended

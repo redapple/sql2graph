@@ -6,7 +6,7 @@ COPY(
         rg.gid AS "mbid:string:mbid",
         rn.name AS "name:string:mb",
         rg.artist_credit AS artist_credit_fk,
-        rgpt.name AS type,
+        rgpt.name AS "etype:string:mb",
         rg.comment
     FROM release_group rg
     JOIN release_name rn ON rg.name=rn.id

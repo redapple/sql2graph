@@ -49,9 +49,10 @@ def main():
     args = ['java']
     args.append('-server')
 
-    args.append('-Xmx1G')
+    if config_parser.has_option('BATCHIMPORT_SETTINGS', 'mx'):
+        args.append('-Xmx%s' % config_parser.get('BATCHIMPORT_SETTINGS', 'mx'))
 
-    args.append('-Dfile.encoding=UTF-8')
+    #args.append('-Dfile.encoding=UTF-8')
 
     if config_parser.has_option('BATCHIMPORT_SETTINGS', 'jar_location'):
         args.append('-jar')
@@ -64,15 +65,21 @@ def main():
     #pprint.pprint(entity_order)
     dumped_entities = dump_tables.keys()
     if config_parser.has_option('BATCHIMPORT_SETTINGS', 'nodes_file_prefix'):
+        nodes_files_dir = config_parser.get('BATCHIMPORT_SETTINGS', 'nodes_files_dir')
         nodes_files_prefix = config_parser.get('BATCHIMPORT_SETTINGS', 'nodes_file_prefix')
         nodes_files_suffix = config_parser.get('BATCHIMPORT_SETTINGS', 'nodes_file_suffix')
-        nodes_files = ["%s%s%s" % (nodes_files_prefix, e, nodes_files_suffix) for e in entity_order if e in dumped_entities]
+        nodes_files = ["%s/%s%s%s" % (
+            nodes_files_dir, nodes_files_prefix, e, nodes_files_suffix)
+            for e in entity_order if e in dumped_entities]
         args.append(','.join(nodes_files))
-        
+
     if config_parser.has_option('BATCHIMPORT_SETTINGS', 'relations_file_prefix'):
+        relations_files_dir = config_parser.get('BATCHIMPORT_SETTINGS', 'relations_files_dir')
         relations_files_prefix = config_parser.get('BATCHIMPORT_SETTINGS', 'relations_file_prefix')
         relations_files_suffix = config_parser.get('BATCHIMPORT_SETTINGS', 'relations_file_suffix')
-        relations_files = ["%s%s%s" % (relations_files_prefix, e, relations_files_suffix) for e in entity_order if e in dumped_entities]
+        relations_files = ["%s/%s%s%s" % (
+            relations_files_dir, relations_files_prefix, e, relations_files_suffix)
+            for e in entity_order if e in dumped_entities]
         args.append(','.join(relations_files))
 
     # check what's being executed

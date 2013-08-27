@@ -7,7 +7,7 @@ COPY(
         n.name AS "name:string:mb",
         a.begin_date_year,
         a.end_date_year,
-        atype.name AS "type:string:mb",
+        atype.name AS "etype:string:mb",
         area.name AS area,
         g.name AS gender,
         a.comment,

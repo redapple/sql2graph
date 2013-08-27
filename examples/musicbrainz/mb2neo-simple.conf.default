@@ -118,7 +118,14 @@ order=area,
     link_work_work
 
 [BATCHIMPORT_SETTINGS]
+mx=4G
 jar_location=/path/to/jexp/batch-import/target/batch-import-jar-with-dependencies.jar
 dbfile_location=/path/to/neo4j-community-x.x.x/data/graph.db
+
+nodes_files_dir=.
 nodes_file_prefix=nodes_
+nodes_file_suffix=.csv
+
+relations_files_dir=.
 relations_file_prefix=rels_
+relations_file_suffix=.csv

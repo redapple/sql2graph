@@ -12,6 +12,7 @@ import traceback
 import sys
 import copy
 import pprint
+import os
 
 # ----------------------------------------------------------------------
 MERGED = '***MERGED***'
@@ -121,10 +122,9 @@ class GraphExporter(object):
     def set_output_indexes_file(self, entity, filename):
         self.output_indexes_files[entity] = filename
 
-    def run(self, nodes=True, rels=True):
+    def run(self, write_nodes=True, write_rels=True):
         self.read_schema()
-        #self.step_set_CSV_header_fields()
-        self.export(nodes, rels)
+        self.export(write_nodes, write_rels)
 
     def read_schema(self):
         self.read_nodes_csv_fields()
@@ -163,28 +163,34 @@ class GraphExporter(object):
         fields_begin = ['start', 'end', 'rel_type']
         rels_properties = []
         for entity_name, entity in self.schema.iteritems():
-            self.rels_csv_fields[entity_name] = copy.copy(fields_begin)
+
             if entity_name not in self.entity_order:
                 continue
-            if entity.relations:
+            if not entity.relations:
+                print "no relations for %s" % entity_name
+            else:
+                self.rels_csv_fields[entity_name] = copy.copy(fields_begin)
                 for rel in entity.relations:
                    rels_properties.extend([prop.name for prop in rel.properties])
                    self.rels_csv_fields[entity_name].extend([prop.name for prop in rel.properties])
-            self.rels_csv_fields[entity_name] = fields_begin + list(
-                set(self.rels_csv_fields[entity_name]) - set(fields_begin))
 
+                self.rels_csv_fields[entity_name] = fields_begin + list(
+                    set(self.rels_csv_fields[entity_name]) - set(fields_begin))
+
+        print "rels_csv_fields:"
+        pprint.pprint(self.rels_csv_fields)
         self.global_rels_csv_fields = fields_begin + list(
             set(rels_properties) - set(fields_begin))
 
-    def export(self, nodes=True, rels=True):
+    def export(self, write_nodes=True, write_rels=True):
         """
         Read dump files and write nodes and relations at the same time
         """
 
         for entity_name in self.entity_order:
-            self.export_entity(entity_name, nodes, rels)
+            self.export_entity(entity_name, write_nodes, write_rels)
 
-    def export_entity(self, entity_name, nodes=True, rels=True):
+    def export_entity(self, entity_name, write_nodes=True, write_rels=True):
         print "export_entity: %s" % entity_name
         if not self.dumpfiles.get(entity_name) or not self.schema.get(entity_name):
             if self.DEBUG:
@@ -197,12 +203,19 @@ class GraphExporter(object):
         nodes_csv_writer, rels_csv_writer = None, None
 
         if onodes_filename and self.nodes_csv_fields.get(entity_name):
-            if not self.pretend and nodes:
-                nodes_csv_writer = CsvBatchWriter(onodes_filename, self.CSV_BATCH_SIZE)
-                nodes_csv_writer.initialize(self.nodes_csv_fields[entity_name])
+            if not self.pretend:
+                if write_nodes:
+                    nodes_csv_writer = CsvBatchWriter(onodes_filename, self.CSV_BATCH_SIZE)
+                    nodes_csv_writer.initialize(self.nodes_csv_fields[entity_name])
+                # create a symbolic link
+                else:
+                    try:
+                        os.symlink(self.dumpfiles.get(entity_name), onodes_filename)
+                    except:
+                        pass
 
         if orels_filename and self.rels_csv_fields.get(entity_name):
-            if not self.pretend and rels:
+            if not self.pretend and write_rels:
                 rels_csv_writer = CsvBatchWriter(orels_filename, self.CSV_BATCH_SIZE)
                 rels_csv_writer.initialize(self.rels_csv_fields[entity_name])
 
@@ -314,7 +327,7 @@ class GraphExporter(object):
             print "know nothing about %s" % entity.name
             return
 
-        PRINT_FREQUENCY = 25000
+        PRINT_FREQUENCY = 50000
 
         # should we write something to one or more indexes?
         if index_writers:
@@ -463,6 +476,6 @@ class GraphExporter(object):
         if filename.endswith(('bz2',)):
             return bz2.BZ2File(filename, 'rb')
         elif filename.endswith(('gz',)):
-            gzip.GzipFile(filename, 'rb')
+            return gzip.GzipFile(filename, 'rb')
         else:
             return open(filename, 'rb')

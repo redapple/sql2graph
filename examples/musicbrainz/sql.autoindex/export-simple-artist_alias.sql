@@ -7,7 +7,7 @@ COPY (
         an.name AS "name:string:mb",
         aa.locale,
         --aa.primary_for_locale,
-        aat.name AS "type:string:mb",
+        aat.name AS "etype:string:mb",
         aa.begin_date_year,
         aa.end_date_year
     FROM artist_alias aa

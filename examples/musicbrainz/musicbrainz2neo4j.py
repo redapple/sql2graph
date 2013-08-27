@@ -172,15 +172,15 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('recording',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True),
+            IntField('pk:int', Column('pk:int'), primary_key=True),
             Field('mbid:string:mbid', Column('mbid:string:mbid')),
             Field('name:string:mb', Column('name:string:mb')),
-            Field('length', Column('length')),
+            Field('length:int', Column('length:int')),
         ],
         relations = [
             Relation(
-                Reference('recording', 'pk'),
-                Reference('artist_credit', 'artist_credit_fk'),
+                Reference('recording', 'pk:int'),
+                Reference('artist_credit', 'artist_credit_fk:int'),
                 [
                     Property('rel_type', 'by'),
                 ]
@@ -189,31 +189,31 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
     ),
     Entity('track',
         fields = [
-            IntField('pk', Column('pk'), primary_key=True),
+            IntField('pk:int', Column('pk:int'), primary_key=True),
             Field('mbid:string:mbid', Column('mbid:string:mbid')),
             Field('name:string:mb', Column('name:string:mb')),
-            Field('number', Column('number')),
-            Field('position', Column('position')),
-            Field('length', Column('length')),
+            Field('number:int', Column('number:int')),
+            Field('position:int', Column('position:int')),
+            Field('length:int', Column('length:int')),
         ],
         relations = [
             Relation(
-                Reference('track', 'pk'),
-                Reference('recording', 'recording_fk'),
+                Reference('track', 'pk:int'),
+                Reference('recording', 'recording_fk:int'),
                 [
                     Property('rel_type', 'is'),
                 ]
             ),
             Relation(
-                Reference('track', 'pk'),
-                Reference('medium', 'medium_fk'),
+                Reference('track', 'pk:int'),
+                Reference('medium', 'medium_fk:int'),
                 [
                     Property('rel_type', 'appears on'),
                 ]
             ),
             Relation(
-                Reference('track', 'pk'),
-                Reference('artist_credit', 'artist_credit_fk'),
+                Reference('track', 'pk:int'),
+                Reference('artist_credit', 'artist_credit_fk:int'),
                 [
                     Property('rel_type', 'credits'),
                 ]
@@ -434,13 +434,35 @@ def main():
     exporter = sql2graph.export.GraphExporter(
         schema=MUSICBRAINZ_SIMPLE_SCHEMA, format='neo4j')
 
+    nodes_files_prefix, nodes_files_suffix = None, None
+    if config_parser.has_option('BATCHIMPORT_SETTINGS', 'nodes_file_prefix'):
+        nodes_files_dir = config_parser.get('BATCHIMPORT_SETTINGS', 'nodes_files_dir')
+        nodes_files_prefix = config_parser.get('BATCHIMPORT_SETTINGS', 'nodes_file_prefix')
+        nodes_files_suffix = config_parser.get('BATCHIMPORT_SETTINGS', 'nodes_file_suffix')
+
+    relations_files_prefix, relations_files_suffix = None, None
+    if config_parser.has_option('BATCHIMPORT_SETTINGS', 'relations_file_prefix'):
+        relations_files_dir = config_parser.get('BATCHIMPORT_SETTINGS', 'relations_files_dir')
+        relations_files_prefix = config_parser.get('BATCHIMPORT_SETTINGS', 'relations_file_prefix')
+        relations_files_suffix = config_parser.get('BATCHIMPORT_SETTINGS', 'relations_file_suffix')
+
     for entity_name in entity_order:
         if dump_tables.get(entity_name):
-            exporter.set_output_nodes_file(entity=entity_name, filename="nodes_%s.csv" % entity_name)
-            exporter.set_output_relations_file(entity=entity_name, filename="rels_%s.csv" % entity_name)
-            exporter.feed_dumpfile(entity=entity_name, filename=dump_tables.get(entity_name))
+            exporter.set_output_nodes_file(
+                entity=entity_name,
+                filename="%s/%s%s%s" % (nodes_files_dir,
+                    nodes_files_prefix or "nodes_",
+                    entity_name, nodes_files_suffix or ".csv"))
+            exporter.set_output_relations_file(
+                entity=entity_name,
+                filename="%s/%s%s%s" % (relations_files_dir,
+                    relations_files_prefix or "rels_",
+                    entity_name, relations_files_suffix or ".csv"))
 
-    exporter.run(nodes=False)
+            exporter.feed_dumpfile(entity=entity_name,
+                filename=dump_tables.get(entity_name))
+
+    exporter.run(write_nodes=False)
 
 
 if __name__ == '__main__':

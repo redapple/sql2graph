@@ -78,8 +78,11 @@ class Relation(object):
         self.properties = properties
 
         # used when we could not resolve on the fly
-        self.start_fk = None
         self.start_target_entity = None
+        self.start_fk = None
+
+        self.end_target_entity = None
+        self.end_fk = None
 
     def get_dict(self, fields):
 
