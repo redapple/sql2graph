@@ -192,7 +192,7 @@ MUSICBRAINZ_SIMPLE_SCHEMA = (
             IntField('pk:int', Column('pk:int'), primary_key=True),
             Field('mbid:string:mbid', Column('mbid:string:mbid')),
             Field('name:string:mb', Column('name:string:mb')),
-            Field('number:int', Column('number:int')),
+            Field('number', Column('number')),
             Field('position:int', Column('position:int')),
             Field('length:int', Column('length:int')),
         ],

@@ -9,5 +9,6 @@ COPY(
         r.length AS "length:int"
     FROM recording r
     JOIN track_name tn ON r.name=tn.id
+    WHERE r.gid != '43c8b9ae-7010-41aa-aa95-a87e94df971e'
 )
 TO stdout CSV HEADER DELIMITER E'\t';
