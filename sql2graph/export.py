@@ -31,7 +31,14 @@ class CsvBatchWriter(object):
         self.so_far = 0
 
     def initialize(self, header_fields):
-        self.fp = open(self.filename, 'wb')
+
+        if self.filename.endswith(('.bz2',)):
+            self.fp = bz2.BZ2File(self.filename, 'wb')
+        elif self.filename.endswith(('.gz',)):
+            self.fp = gzip.GzipFile(self.filename, 'wb')
+        else:
+            self.fp = open(self.filename, 'wb')
+
         self.csvwriter = csv.DictWriter(self.fp, header_fields, dialect="excel-tab")
         self.csvwriter.writeheader()
 
@@ -473,9 +480,9 @@ class GraphExporter(object):
 
     @classmethod
     def open_dumpfile(cls, filename):
-        if filename.endswith(('bz2',)):
+        if filename.endswith(('.bz2',)):
             return bz2.BZ2File(filename, 'rb')
-        elif filename.endswith(('gz',)):
+        elif filename.endswith(('.gz',)):
             return gzip.GzipFile(filename, 'rb')
         else:
             return open(filename, 'rb')
