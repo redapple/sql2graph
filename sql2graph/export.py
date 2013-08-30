@@ -196,6 +196,7 @@ class GraphExporter(object):
 
         for entity_name in self.entity_order:
             self.export_entity(entity_name, write_nodes, write_rels)
+            self.node_list.offload_hint()
 
     def export_entity(self, entity_name, write_nodes=True, write_rels=True):
         print "export_entity: %s" % entity_name

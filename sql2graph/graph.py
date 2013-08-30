@@ -8,16 +8,76 @@ import schema
 
 # ----------------------------------------------------------------------
 
+import pickle
 class DictLookup(object):
     def __init__(self):
         self.container = {}
+        self.loaded_containers = {}
+
+        self.current_entity = None
+
+    def pickle_filename(self, entity):
+        return 'map__%s.pkl' % entity
+
+    def entity_offload(self, entity):
+
+        # offload to disk
+        print "offloading mapping for %s to disk..." % entity,
+        print "%d entities..." % len(self.container[entity]),
+
+        with open(self.pickle_filename(entity), 'wb') as pf:
+            pickle.dump(self.container[entity], pf)
+
+        del self.container[entity]
+        self.container[entity] = None
+
+        self.loaded_containers[entity] = False
+        print "done."
+
+    def entity_load(self, entity):
+        # load from disk
+        print "loading mapping for %s from disk..." % entity,
+
+        with open(self.pickle_filename(entity), 'rb') as pf:
+            self.container[entity] = pickle.load(pf)
+
+        print "%d entities..." % len(self.container[entity]),
+        self.loaded_containers[entity] = True
+        print "done."
+
+    def entity_offload_loaded(self):
+        for entity in self.loaded_containers.keys():
+            if self.loaded_containers[entity]:
+                self.entity_offload(entity)
+
+    def offload_hint(self):
+        self.entity_offload_loaded()
 
     def append(self, entity, entity_pk, node_position):
         if not self.container.get(entity):
+
+            # if we're appending to another entity
+            # we assume we've change entity altogether
+            # so offload all we can
+            if entity != self.current_entity:
+                if self.current_entity:
+                    self.entity_offload(self.current_entity)
+                    # offload any other loaded entity
+                    self.entity_offload_loaded()
+
+                self.current_entity = entity
+
             self.container[entity] = {}
+            self.current_entity = entity
+
         self.container[entity][entity_pk] = node_position
 
     def lookup(self, entity, entity_pk):
+
+        if (    not self.loaded_containers.get(entity)
+            and not self.container.get(entity)):
+            self.entity_load(entity)
+
         if self.container.get(entity):
             if self.container[entity].get(entity_pk):
                 return self.container[entity][entity_pk]
@@ -116,6 +176,9 @@ class NodeList(object):
 
         self.last_lookup = None
         self.last_lookup_result = None
+
+    def offload_hint(self):
+        self.reverse_lookup.offload_hint()
 
     def get_all_fields(self):
         return self.entity_fields
