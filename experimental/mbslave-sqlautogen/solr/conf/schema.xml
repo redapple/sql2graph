@@ -1,0 +1,94 @@
+<?xml version="1.0" ?>
+<schema name="MusicBrainz" version="1.1">
+
+	<types>
+		<fieldtype name="string"  class="solr.StrField" sortMissingLast="true" omitNorms="true"/>
+		<fieldType name="text" class="solr.TextField" positionIncrementGap="100">
+			<analyzer type="index">
+				<tokenizer class="solr.StandardTokenizerFactory"/>
+				<filter class="solr.LowerCaseFilterFactory"/>
+				<filter class="solr.ASCIIFoldingFilterFactory"/> <!-- FIXME use MB's unaccent code -->
+			</analyzer>
+			<analyzer type="query">
+				<tokenizer class="solr.StandardTokenizerFactory"/>
+				<filter class="solr.LowerCaseFilterFactory"/>
+				<filter class="solr.ASCIIFoldingFilterFactory"/> <!-- FIXME use MB's unaccent code -->
+			</analyzer>
+		</fieldType>
+	</types>
+
+	<fields>   
+
+		<!-- Internal ID: "<kind>:<rowid>" -->
+		<field name="id" type="string" indexed="true" stored="true" required="true" />
+
+		<!--
+		Type of the entity this document stores. Can be one of:
+			- artist
+			- label
+			- release
+			- release_group
+			- recording
+			- work
+		-->
+		<field name="kind" type="string" indexed="true" stored="true" required="true" />
+
+		<!-- MusicBrainz unique ID. This field includes also merged MBIDs -->
+		<field name="mbid" type="string" indexed="true" stored="true" required="true" multiValued="true" />
+
+		<!-- Artist name, label name, release group title, recording or recording title. -->
+		<field name="name" type="text" indexed="true" />
+
+		<!-- Artist sort name, label sort name. -->
+		<field name="sort_name" type="text" indexed="true" />
+
+		<!-- Artist sort name, label sort name. -->
+		<field name="disambiguation" type="text" indexed="true" />
+
+		<!-- Artist alias, label alias, work alias. -->
+		<field name="alias" type="text" indexed="true" stored="false" multiValued="true" />
+
+		<!-- Only used for release groups, releases and recordings. -->
+		<field name="artist" type="text" indexed="true" multiValued="true" />
+
+		<!-- Artist type, label type, work type. -->
+		<field name="type" type="text" indexed="true" multiValued="true" />
+
+		<!-- Release status. -->
+		<field name="status" type="text" indexed="true" />
+
+		<!-- Gender. Applicable for: artist. -->
+		<field name="gender" type="text" indexed="true" />
+
+		<!-- IPI code. Applicable for: artist, label. -->
+		<field name="ipi" type="text" indexed="true" multiValued="true" />
+
+		<!-- ISWC code. Applicable for: work. -->
+		<field name="iswc" type="text" indexed="true" multiValued="true" />
+
+		<!-- ISRC code. Applicable for: recording. -->
+		<field name="isrc" type="text" indexed="true" multiValued="true" />
+
+		<!-- Label code. Applicable for: label. -->
+		<field name="code" type="text" indexed="true" multiValued="true" />
+
+		<!-- Release label. Applicable for: release. -->
+		<field name="catno" type="text" indexed="true" stored="false" multiValued="true" />
+
+		<!-- Release catalog number. Applicable for: release. -->
+		<field name="label" type="text" indexed="true" stored="false" multiValued="true" />
+
+		<!-- Barcode. Applicable for: release. -->
+		<field name="barcode" type="text" indexed="true" />
+
+		<!-- Country name or ISO code. Applicable for: artist, label, release. -->
+		<field name="country" type="text" indexed="true" stored="false" multiValued="true" />
+
+	</fields>
+
+	<uniqueKey>id</uniqueKey>
+	<defaultSearchField>name</defaultSearchField>
+	<solrQueryParser defaultOperator="OR" />
+
+</schema>
+
