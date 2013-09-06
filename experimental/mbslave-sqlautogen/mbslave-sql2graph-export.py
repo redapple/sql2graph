@@ -101,7 +101,7 @@ TO '%(filename)s' CSV HEADER DELIMITER E'\\t';
     # --- save the full nodes tables to file
     def create_nodes_query(self):
 
-        print "SELECT 'create nodes file';"
+        #print "SELECT 'create nodes file';"
 
         node_queries = []
         for columns, joins in self.schema.fetch_all(self.cfg, self.db, self.all_properties):
@@ -427,6 +427,17 @@ schema = Schema([
             Field('name', Column('name')),
         ]
     ),
+    Entity('release_label',
+        [],
+        [
+            Relation(
+                'RELEASED_ON',
+                start=Reference('release', Column('release')),
+                end=Reference('label', Column('label')),
+                properties=[]
+            ),
+        ]
+    ),
     Entity('release_packaging',
         [
             IntegerField('pk', Column('id')),
@@ -465,8 +476,15 @@ schema = Schema([
     # link_artist_*
     make_link_entity('artist', 'artist'),
     make_link_entity('artist', 'label'),
+    make_link_entity('artist', 'release'),
+    make_link_entity('artist', 'release_group'),
     make_link_entity('artist', 'url'),
+
+    make_link_entity('label', 'label'),
+    make_link_entity('label', 'release'),
+    make_link_entity('label', 'release_group'),
     make_link_entity('label', 'url'),
+
     #make_link_entity('link_artist_recording',
         #'artist', 'artist_fk',
         #'recording', 'recording_fk'),
@@ -484,7 +502,7 @@ schema = Schema([
         #'work', 'work_fk'),
 ])
 
-entities = (
+entities = [
     'area',
     'area_alias',
     'area_type',
@@ -497,21 +515,30 @@ entities = (
     'label',
     'label_type',
     'url',
-    #'release_group',
-    #'release_group_primary_type',
+    'release_group',
+    'release_group_primary_type',
     'release',
     'release_country',
     'release_packaging',
     'release_status',
+    'release_label',
 
     'l_artist_artist',
     'l_artist_label',
+    'l_artist_release',
+    'l_artist_release_group',
     'l_artist_url',
+
+    'l_label_label',
+    'l_label_release',
+    'l_label_release_group',
     'l_label_url',
-)
+    #'l_work_work',
+]
+
 # --------------------
-nodes_filename = '/media/data/neo4j/musicbrainz__nodes__full.csv'
-relations_filename = '/media/data/neo4j/musicbrainz__rels__full.csv'
+nodes_filename = '/tmp/musicbrainz__nodes__full.csv'
+relations_filename = '/tmp/musicbrainz__rels__full.csv'
 
 exporter = SQL2GraphExporter('mbslave.conf', schema, entities)
 exporter.set_nodes_filename(nodes_filename)
@@ -519,4 +546,4 @@ exporter.set_rels_filename(relations_filename)
 
 print exporter.create_mapping_table_query()
 print exporter.create_nodes_query()
-print exporter.create_relationships_query(multiple=True)
+print exporter.create_relationships_query()

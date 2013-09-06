@@ -105,11 +105,34 @@ def generate_union_query(queries):
     return "\n\nUNION\n\n""".join(queries)
 
 
+class SchemaError(RuntimeError):
+    _dummy = True
+
 class SchemaHelper(object):
 
     def __init__(self, schema, entities):
         self.schema = schema
         self.entities = entities
+
+        self.check_schema()
+
+    def check_schema(self):
+        for kind in self.entities:
+            try:
+                self.schema[kind]
+            except:
+                raise SchemaError("Not all entities have a defined schema: %s" % kind)
+
+        rel_entities = []
+        for kind in self.entities:
+            entity = self.schema[kind]
+            for r in entity.iter_relations():
+                rel_entities.append(r.start.entity)
+                rel_entities.append(r.end.entity)
+
+        missing = set(rel_entities) - set(self.entities)
+        if missing:
+            raise SchemaError("Some relations need additional entities: %s" % str(missing))
 
     def iter_entity_nodes(self, db, kind, properties=[]):
         entity = self.schema[kind]
