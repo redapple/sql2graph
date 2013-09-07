@@ -38,23 +38,23 @@ class SQL2GraphExporter(object):
             )
             query= """
 SELECT
-    %(fields)s
+%(fields)s
 FROM (
-    %(query)s
+%(query)s
 )
 AS wrapped
-        """ % dict(query=indent(query, '   '), fields=select_lines)
+        """ % dict(query=indent(query, '   '), fields=indent(select_lines, '   '))
 
         return """
 COPY(
-    %(query)s
+%(query)s
 )
 TO '%(filename)s' CSV HEADER DELIMITER E'\\t';
 """ % dict(query=indent(query, '   '), filename=output_filename)
 
 
     # --- create temporary mapping table
-    def create_mapping_table_query(self):
+    def create_mapping_table_query(self, multiple=False):
         print """
         -- Create the mapping table
         -- between (entity, pk) tuples and incrementing node IDs
@@ -67,51 +67,70 @@ TO '%(filename)s' CSV HEADER DELIMITER E'\\t';
                 node_queries.append(generate_iter_query(columns, joins))
 
 
-        mapping_query = """
-        SELECT
-            kind AS entity,
-            pk,
-            row_number() OVER (ORDER BY kind, pk) as node_id
-        FROM
-        (
-        %s
-        )
-        AS entity_union
-        """ % indent(generate_union_query(node_queries), '    ')
+        if multiple:
 
+            query = """
+CREATE TEMPORARY TABLE entity_mapping
+(
+    node_id             SERIAL,
+    entity              TEXT,
+    pk                  BIGINT
+);
+"""
 
-        temp_mapping_table = """
-        DROP TABLE IF EXISTS entity_mapping;
+            insert_entity_query = """
+INSERT INTO entity_mapping
+    (entity, pk)
+%s
+ORDER BY pk;\n"""
+            for q in node_queries:
+                query += insert_entity_query % indent(q, '    ')
 
-        CREATE TEMPORARY TABLE entity_mapping AS
-        (
-        %s
-        );
+            query += """-- create index to speedup lookups
+CREATE INDEX ON entity_mapping (entity, pk);
 
-        -- create index to speedup lookups
-        CREATE INDEX ON entity_mapping (entity, pk);
+ANALYZE entity_mapping;
+"""
+            return query
 
-        ANALYZE entity_mapping;
+        else:
 
-        """ % indent(mapping_query, '    ')
+            mapping_query = """
+SELECT
+    kind AS entity,
+    pk,
+    row_number() OVER (ORDER BY kind, pk) as node_id
+FROM
+(
+%s
+)
+AS entity_union \n""" % indent(generate_union_query(node_queries), '    ')
 
-        return temp_mapping_table
+            temp_mapping_table = """
+DROP TABLE IF EXISTS entity_mapping;
+
+CREATE TEMPORARY TABLE entity_mapping AS
+(
+%s
+);
+
+-- create index to speedup lookups
+CREATE INDEX ON entity_mapping (entity, pk);
+
+ANALYZE entity_mapping;
+
+""" % indent(mapping_query, '    ')
+
+            return temp_mapping_table
 
 
     # --- save the full nodes tables to file
-    def create_nodes_query(self):
-
-        #print "SELECT 'create nodes file';"
+    def create_nodes_query(self, multiple=False):
 
         node_queries = []
         for columns, joins in self.schema.fetch_all(self.cfg, self.db, self.all_properties):
             if columns and joins:
                 node_queries.append(generate_iter_query(columns, joins))
-
-        ordered_union_query = """
-        %s
-        ORDER BY kind, pk
-        """ % generate_union_query(node_queries)
 
         headers = dict([(name, name) for (name, maptype) in self.all_properties])
         headers.update({
@@ -120,17 +139,29 @@ TO '%(filename)s' CSV HEADER DELIMITER E'\\t';
                 "pk":   '"pk:int:mbid"',
                 "name": '"name:string:mb"',
             })
-        return self.generate_tsvfile_output_query(
-            ordered_union_query,
-            nodes_filename,
-            headers)
+
+        if multiple:
+            qs = []
+            for i, q in enumerate(node_queries, start=1):
+                qs.append(
+                    self.generate_tsvfile_output_query(
+                        """\n%s\nORDER BY pk\n""" % q,
+                        self.nodes_filename.replace('.csv', '.%04d.csv' % i),
+                        headers)
+                )
+            return "\n".join(qs)
+        else:
+            ordered_union_query = """\n%s\nORDER BY kind, pk\n""" % generate_union_query(node_queries)
+
+            return self.generate_tsvfile_output_query(
+                ordered_union_query,
+                self.nodes_filename,
+                headers)
 
 
     def create_relationships_query(self, multiple=False):
 
         rels_queries = []
-
-        #print "SELECT 'create relationship file';"
 
         for relations in self.schema.fetch_all_relations(self.cfg, self.db, self.all_relations_properties):
             if not relations:
@@ -140,15 +171,15 @@ TO '%(filename)s' CSV HEADER DELIMITER E'\\t';
 
         if multiple:
             qs = []
-            for i, q in enumerate(rels_queries):
-                #print "SELECT '%s';" % rels_queries[i][:128].replace("'", "|").replace('"', "|")
+            for i, q in enumerate(rels_queries, start=1):
                 qs.append(
                     self.generate_tsvfile_output_query(q,
-                        relations_filename.replace('.csv', '.%04d.csv' % i)))
+                        self.relations_filename.replace('.csv', '.%04d.csv' % i)))
             return "\n".join(qs)
         else:
             return self.generate_tsvfile_output_query(
-                generate_union_query(rels_queries), relations_filename)
+                generate_union_query(rels_queries),
+                self.relations_filename)
 
 # ----------------------------------------------------------------------
 def text_to_rel_type(s):
@@ -169,6 +200,94 @@ def make_link_entity(start_entity, end_entity):
                 properties=[])
         ]
     )
+
+entities = [
+    'area',
+    'area_alias',
+    'area_type',
+    'artist',
+    'artist_alias',
+    'artist_type',
+    'artist_credit',
+    'artist_credit_name',
+    'gender',
+    'label',
+    'label_type',
+    'url',
+    'release_group',
+    'release_group_primary_type',
+    'release',
+    'release_country',
+    'release_packaging',
+    'release_status',
+    'release_label',
+    'recording',
+    'track',
+    'medium',
+    'medium_format',
+    'work',
+    'work_type',
+
+    #'l_artist_artist',
+    #'l_artist_label',
+    #'l_artist_release',
+    #'l_artist_release_group',
+    #'l_artist_url',
+
+    #'l_label_label',
+    #'l_label_release',
+    #'l_label_release_group',
+    #'l_label_url',
+    ##'l_work_work',
+]
+
+linked_entities = (
+        ('area', 'area'),
+        ('area', 'artist'),
+        ('area', 'label'),
+        ('area', 'work'),
+        ('area', 'url'),
+        ('area', 'recording'),
+        ('area', 'release'),
+        ('area', 'release_group'),
+
+        ('artist', 'artist'),
+        ('artist', 'label'),
+        ('artist', 'recording'),
+        ('artist', 'release'),
+        ('artist', 'release_group'),
+        ('artist', 'url'),
+        ('artist', 'work'),
+
+        ('label', 'label'),
+        ('label', 'recording'),
+        ('label', 'release'),
+        ('label', 'release_group'),
+        ('label', 'url'),
+        ('label', 'work'),
+
+        ('recording', 'recording'),
+        ('recording', 'release'),
+        ('recording', 'release_group'),
+        ('recording', 'url'),
+        ('recording', 'work'),
+
+        ('release', 'release'),
+        ('release', 'release_group'),
+        ('release', 'url'),
+        ('release', 'work'),
+
+        ('release_group', 'release_group'),
+        ('release_group', 'url'),
+        ('release_group', 'work'),
+
+        ('url', 'url'),
+        ('url', 'work'),
+
+        ('work', 'work'),
+)
+
+entities.extend(["l_%s_%s" % (e0, e1) for e0, e1 in linked_entities])
 
 schema = Schema([
     Entity('area_type', [
@@ -333,15 +452,32 @@ schema = Schema([
             Field('name', Column('name')),
         ]
     ),
-    Entity('work', [
-        Field('mbid', Column('gid')),
-        Field('disambiguation', Column('comment')),
-        Field('name', Column('name', ForeignColumn('work_name', 'name'))),
-        Field('type', Column('type', ForeignColumn('work_type', 'name', null=True))),
-        #MultiField('mbid', ForeignColumn('work_gid_redirect', 'gid', backref='new_id')),
-        #MultiField('iswc', ForeignColumn('iswc', 'iswc')),
-        #MultiField('alias', ForeignColumn('work_alias', 'name', ForeignColumn('work_name', 'name'))),
-    ]),
+    Entity('work',
+        [
+            IntegerField('pk', Column('id')),
+            Field('mbid', Column('gid')),
+            Field('disambiguation', Column('comment')),
+            Field('name', Column('name', ForeignColumn('work_name', 'name'))),
+            #Field('type', Column('type', ForeignColumn('work_type', 'name', null=True))),
+            #MultiField('mbid', ForeignColumn('work_gid_redirect', 'gid', backref='new_id')),
+            #MultiField('iswc', ForeignColumn('iswc', 'iswc')),
+            #MultiField('alias', ForeignColumn('work_alias', 'name', ForeignColumn('work_name', 'name'))),
+        ],
+        [
+            Relation(
+                'OF_TYPE',
+                start=Reference('work', Column('id')),
+                end=Reference('work_type', Column('type')),
+                properties=[]
+            ),
+        ]
+    ),
+    Entity('work_type',
+        [
+            IntegerField('pk', Column('id')),
+            Field('name', Column('name')),
+        ]
+    ),
     Entity('release_group',
         [
             IntegerField('pk', Column('id')),
@@ -458,14 +594,87 @@ schema = Schema([
             ),
         ]
     ),
-    Entity('recording', [
-        Field('mbid', Column('gid')),
-        Field('disambiguation', Column('comment')),
-        Field('name', Column('name', ForeignColumn('track_name', 'name'))),
-        #Field('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
-        #MultiField('mbid', ForeignColumn('recording_gid_redirect', 'gid', backref='new_id')),
-        #MultiField('alias', ForeignColumn('track', 'name', ForeignColumn('track_name', 'name'))),
-    ]),
+    Entity('medium',
+        # do not create nodes
+        [
+            IntegerField('pk', Column('id')),
+            Field('name', Column('name')),
+        ],
+        [
+            Relation(
+                'MEDIUM',
+                start=Reference('release', Column('release')),
+                end=Reference('medium', Column('id')),
+                properties=[]
+            ),
+            Relation(
+                'HAS_FORMAT',
+                start=Reference('medium', Column('id')),
+                end=Reference('medium_format', Column('format')),
+                properties=[]
+            ),
+        ]
+    ),
+    Entity('medium_format',
+        [
+            IntegerField('pk', Column('id')),
+            Field('name', Column('name')),
+        ],
+        [
+            Relation(
+                'PARENT_FORMAT',
+                start=Reference('medium_format', Column('id')),
+                end=Reference('medium_format', Column('parent')),
+                properties=[]
+            ),
+        ]
+    ),
+    Entity('recording',
+        [
+            IntegerField('pk', Column('id')),
+            Field('mbid', Column('gid')),
+            Field('disambiguation', Column('comment')),
+            Field('name', Column('name', ForeignColumn('track_name', 'name'))),
+            #Field('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
+            #MultiField('mbid', ForeignColumn('recording_gid_redirect', 'gid', backref='new_id')),
+            #MultiField('alias', ForeignColumn('track', 'name', ForeignColumn('track_name', 'name'))),
+        ],
+        [
+            Relation(
+                'CREDITED_ON',
+                start=Reference('artist_credit', Column('artist_credit')),
+                end=Reference('recording', Column('id')),
+                properties=[]
+            ),
+        ]
+    ),
+    Entity('track',
+        [
+            IntegerField('pk', Column('id')),
+            Field('mbid', Column('gid')),
+            Field('name', Column('name', ForeignColumn('track_name', 'name'))),
+        ],
+        [
+            Relation(
+                'IS_RECORDING',
+                start=Reference('track', Column('id')),
+                end=Reference('recording', Column('recording')),
+                properties=[]
+            ),
+            Relation(
+                'APPEARS_ON',
+                start=Reference('track', Column('id')),
+                end=Reference('medium', Column('medium')),
+                properties=[]
+            ),
+            Relation(
+                'CREDITED_ON',
+                start=Reference('artist_credit', Column('artist_credit')),
+                end=Reference('track', Column('id')),
+                properties=[]
+            ),
+        ],
+    ),
     Entity('url',
         [
             IntegerField('pk', Column('id')),
@@ -474,16 +683,16 @@ schema = Schema([
         ],
     ),
     # link_artist_*
-    make_link_entity('artist', 'artist'),
-    make_link_entity('artist', 'label'),
-    make_link_entity('artist', 'release'),
-    make_link_entity('artist', 'release_group'),
-    make_link_entity('artist', 'url'),
+    #make_link_entity('artist', 'artist'),
+    #make_link_entity('artist', 'label'),
+    #make_link_entity('artist', 'release'),
+    #make_link_entity('artist', 'release_group'),
+    #make_link_entity('artist', 'url'),
 
-    make_link_entity('label', 'label'),
-    make_link_entity('label', 'release'),
-    make_link_entity('label', 'release_group'),
-    make_link_entity('label', 'url'),
+    #make_link_entity('label', 'label'),
+    #make_link_entity('label', 'release'),
+    #make_link_entity('label', 'release_group'),
+    #make_link_entity('label', 'url'),
 
     #make_link_entity('link_artist_recording',
         #'artist', 'artist_fk',
@@ -500,41 +709,11 @@ schema = Schema([
     #make_link_entity('link_artist_work',
         #'artist', 'artist_fk',
         #'work', 'work_fk'),
-])
+    ]
+    +
+    [make_link_entity(e0, e1) for (e0, e1) in linked_entities]
+)
 
-entities = [
-    'area',
-    'area_alias',
-    'area_type',
-    'artist',
-    'artist_alias',
-    'artist_type',
-    'artist_credit',
-    'artist_credit_name',
-    'gender',
-    'label',
-    'label_type',
-    'url',
-    'release_group',
-    'release_group_primary_type',
-    'release',
-    'release_country',
-    'release_packaging',
-    'release_status',
-    'release_label',
-
-    'l_artist_artist',
-    'l_artist_label',
-    'l_artist_release',
-    'l_artist_release_group',
-    'l_artist_url',
-
-    'l_label_label',
-    'l_label_release',
-    'l_label_release_group',
-    'l_label_url',
-    #'l_work_work',
-]
 
 # --------------------
 nodes_filename = '/tmp/musicbrainz__nodes__full.csv'
@@ -544,6 +723,6 @@ exporter = SQL2GraphExporter('mbslave.conf', schema, entities)
 exporter.set_nodes_filename(nodes_filename)
 exporter.set_rels_filename(relations_filename)
 
-print exporter.create_mapping_table_query()
-print exporter.create_nodes_query()
-print exporter.create_relationships_query()
+print exporter.create_mapping_table_query(multiple=True)
+print exporter.create_nodes_query(multiple=True)
+print exporter.create_relationships_query(multiple=True)
