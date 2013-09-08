@@ -228,17 +228,6 @@ entities = [
     'work',
     'work_type',
 
-    #'l_artist_artist',
-    #'l_artist_label',
-    #'l_artist_release',
-    #'l_artist_release_group',
-    #'l_artist_url',
-
-    #'l_label_label',
-    #'l_label_release',
-    #'l_label_release_group',
-    #'l_label_url',
-    ##'l_work_work',
 ]
 
 linked_entities = (
@@ -682,33 +671,6 @@ schema = Schema([
             Field('name', Column('url')),
         ],
     ),
-    # link_artist_*
-    #make_link_entity('artist', 'artist'),
-    #make_link_entity('artist', 'label'),
-    #make_link_entity('artist', 'release'),
-    #make_link_entity('artist', 'release_group'),
-    #make_link_entity('artist', 'url'),
-
-    #make_link_entity('label', 'label'),
-    #make_link_entity('label', 'release'),
-    #make_link_entity('label', 'release_group'),
-    #make_link_entity('label', 'url'),
-
-    #make_link_entity('link_artist_recording',
-        #'artist', 'artist_fk',
-        #'recording', 'recording_fk'),
-    #make_link_entity('link_artist_release',
-        #'artist', 'artist_fk',
-        #'release', 'release_fk'),
-    #make_link_entity('link_artist_release_group',
-        #'artist', 'artist_fk',
-        #'release_group', 'release_group_fk'),
-    #make_link_entity('link_artist_url',
-        #'artist', 'artist_fk',
-        #'url', 'url_fk'),
-    #make_link_entity('link_artist_work',
-        #'artist', 'artist_fk',
-        #'work', 'work_fk'),
     ]
     +
     [make_link_entity(e0, e1) for (e0, e1) in linked_entities]
@@ -723,6 +685,8 @@ exporter = SQL2GraphExporter('mbslave.conf', schema, entities)
 exporter.set_nodes_filename(nodes_filename)
 exporter.set_rels_filename(relations_filename)
 
-print exporter.create_mapping_table_query(multiple=True)
-print exporter.create_nodes_query(multiple=True)
-print exporter.create_relationships_query(multiple=True)
+multiple=False
+print exporter.create_mapping_table_query(multiple=multiple)
+print exporter.create_nodes_query(multiple=multiple)
+
+print exporter.create_relationships_query(multiple=False)
