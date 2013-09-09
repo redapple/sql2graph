@@ -6,7 +6,7 @@ from lxml import etree as ET
 from mbslave import Config, connect_db
 from mbslave.search import generate_iter_query
 from mbslave.search import SchemaHelper, Schema, Column, ForeignColumn, \
-    Field, IntegerField, Relation, Entity, Reference
+    Property, IntegerProperty, Relation, Entity, Reference
 from mbslave.search import indent, generate_union_query
 
 # ----------------------------------------------------------------------
@@ -193,8 +193,7 @@ def make_link_entity(start_entity, end_entity):
                 Column('link',
                     ForeignColumn('link', 'link_type',
                         ForeignColumn('link_type', 'name')),
-                    function = text_to_rel_type)
-                        ,
+                    function = text_to_rel_type),
                 start=Reference(start_entity, Column('entity0')),
                 end=Reference(end_entity, Column('entity1'),),
                 properties=[])
@@ -280,19 +279,19 @@ entities.extend(["l_%s_%s" % (e0, e1) for e0, e1 in linked_entities])
 
 schema = Schema([
     Entity('area_type', [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name')),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name')),
         ],
     ),
     Entity('area', [
-            IntegerField('pk', Column('id')),
-            Field('mbid', Column('gid')),
-            Field('name', Column('name')),
-            #Field('type', Column('type', ForeignColumn('area_type', 'name', null=True))),
+            IntegerProperty('pk', Column('id')),
+            Property('mbid', Column('gid')),
+            Property('name', Column('name')),
+            #Property('type', Column('type', ForeignColumn('area_type', 'name', null=True))),
         ],
         [
             Relation(
-                'OF_TYPE',
+                'AREA_TYPE',
                 start=Reference('area', Column('id')),
                 end=Reference('area_type', Column('type')),
                 properties=[]
@@ -302,9 +301,10 @@ schema = Schema([
     Entity(
         'area_alias',
         [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name')),
-            Field('type', Column('type', ForeignColumn('area_alias_type', 'name', null=True))),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name')),
+            Property('type', Column('type', ForeignColumn('area_alias_type', 'name', null=True))),
+            Property('locale', Column('locale')),
         ],
         [
             Relation(
@@ -317,18 +317,15 @@ schema = Schema([
     ),
     Entity('artist',
         [
-            IntegerField('pk', Column('id')),
-            Field('mbid', Column('gid')),
-            Field('disambiguation', Column('comment')),
-            Field('name', Column('name', ForeignColumn('artist_name', 'name'))),
-            #Field('sort_name', Column('sort_name', ForeignColumn('artist_name', 'name'))),
-            #Field('country', Column('country', ForeignColumn('country', 'name', null=True))),
-            #Field('country', Column('country', ForeignColumn('country', 'iso_code', null=True))),
-            #Field('gender', Column('gender', ForeignColumn('gender', 'name', null=True))),
-            #Field('type', Column('type', ForeignColumn('artist_type', 'name', null=True))),
-            #MultiField('mbid', ForeignColumn('artist_gid_redirect', 'gid', backref='new_id')),
-            #MultiField('ipi', ForeignColumn('artist_ipi', 'ipi')),
-            #MultiField('alias', ForeignColumn('artist_alias', 'name', ForeignColumn('artist_name', 'name'))),
+            IntegerProperty('pk', Column('id')),
+            Property('mbid', Column('gid')),
+            Property('disambiguation', Column('comment')),
+            Property('name', Column('name', ForeignColumn('artist_name', 'name'))),
+            #Property('sort_name', Column('sort_name', ForeignColumn('artist_name', 'name'))),
+            #Property('country', Column('country', ForeignColumn('country', 'name', null=True))),
+            #Property('country', Column('country', ForeignColumn('country', 'iso_code', null=True))),
+            #Property('gender', Column('gender', ForeignColumn('gender', 'name', null=True))),
+            #Property('type', Column('type', ForeignColumn('artist_type', 'name', null=True))),
         ],
         [
             Relation(
@@ -356,7 +353,7 @@ schema = Schema([
                 properties=[]
             ),
             Relation(
-                'OF_TYPE',
+                'ARTIST_TYPE',
                 start=Reference('artist', Column('id')),
                 end=Reference('artist_type', Column('type')),
                 properties=[]
@@ -365,9 +362,9 @@ schema = Schema([
     ),
     Entity('artist_alias',
         [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name', ForeignColumn('artist_name', 'name'))),
-            Field('type', Column('type', ForeignColumn('artist_alias_type', 'name', null=True))),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name', ForeignColumn('artist_name', 'name'))),
+            Property('type', Column('type', ForeignColumn('artist_alias_type', 'name', null=True))),
         ],
         [
             Relation(
@@ -380,14 +377,14 @@ schema = Schema([
     ),
     Entity('artist_type',
         [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name')),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name')),
         ],
     ),
     Entity('artist_credit',
         fields = [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name', ForeignColumn('artist_name', 'name'))),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name', ForeignColumn('artist_name', 'name'))),
         ]
     ),
     Entity('artist_credit_name',
@@ -397,32 +394,32 @@ schema = Schema([
                 'CREDITED_AS',
                 start=Reference('artist', Column('artist')),
                 end=Reference('artist_credit', Column('artist_credit')),
-                properties=[]
+                properties=[
+                    IntegerProperty('position', Column('position')),
+                    Property('join', Column('join_phrase')),
+                ]
             ),
         ]
     ),
     Entity('gender', [
-        IntegerField('pk', Column('id')),
-        Field('name', Column('name')),
+        IntegerProperty('pk', Column('id')),
+        Property('name', Column('name')),
     ]),
     Entity('label',
         [
-            IntegerField('pk', Column('id')),
-            Field('mbid', Column('gid')),
-            Field('disambiguation', Column('comment')),
-            IntegerField('code', Column('label_code')),
-            Field('name', Column('name', ForeignColumn('label_name', 'name'))),
-            #Field('sort_name', Column('sort_name', ForeignColumn('label_name', 'name'))),
-            #Field('country', Column('country', ForeignColumn('country', 'name', null=True))),
-            #Field('country', Column('country', ForeignColumn('country', 'iso_code', null=True))),
-            #Field('type', Column('type', ForeignColumn('label_type', 'name', null=True))),
-            #MultiField('mbid', ForeignColumn('label_gid_redirect', 'gid', backref='new_id')),
-            #MultiField('ipi', ForeignColumn('label_ipi', 'ipi')),
-            #MultiField('alias', ForeignColumn('label_alias', 'name', ForeignColumn('label_name', 'name'))),
+            IntegerProperty('pk', Column('id')),
+            Property('mbid', Column('gid')),
+            Property('disambiguation', Column('comment')),
+            IntegerProperty('code', Column('label_code')),
+            Property('name', Column('name', ForeignColumn('label_name', 'name'))),
+            #Property('sort_name', Column('sort_name', ForeignColumn('label_name', 'name'))),
+            #Property('country', Column('country', ForeignColumn('country', 'name', null=True))),
+            #Property('country', Column('country', ForeignColumn('country', 'iso_code', null=True))),
+            #Property('type', Column('type', ForeignColumn('label_type', 'name', null=True))),
         ],
         [
             Relation(
-                'OF_TYPE',
+                'LABEL_TYPE',
                 start=Reference('label', Column('id')),
                 end=Reference('label_type', Column('type')),
                 properties=[]
@@ -437,24 +434,21 @@ schema = Schema([
     ),
     Entity('label_type',
         [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name')),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name')),
         ]
     ),
     Entity('work',
         [
-            IntegerField('pk', Column('id')),
-            Field('mbid', Column('gid')),
-            Field('disambiguation', Column('comment')),
-            Field('name', Column('name', ForeignColumn('work_name', 'name'))),
-            #Field('type', Column('type', ForeignColumn('work_type', 'name', null=True))),
-            #MultiField('mbid', ForeignColumn('work_gid_redirect', 'gid', backref='new_id')),
-            #MultiField('iswc', ForeignColumn('iswc', 'iswc')),
-            #MultiField('alias', ForeignColumn('work_alias', 'name', ForeignColumn('work_name', 'name'))),
+            IntegerProperty('pk', Column('id')),
+            Property('mbid', Column('gid')),
+            Property('disambiguation', Column('comment')),
+            Property('name', Column('name', ForeignColumn('work_name', 'name'))),
+            #Property('type', Column('type', ForeignColumn('work_type', 'name', null=True))),
         ],
         [
             Relation(
-                'OF_TYPE',
+                'WORK_TYPE',
                 start=Reference('work', Column('id')),
                 end=Reference('work_type', Column('type')),
                 properties=[]
@@ -463,27 +457,22 @@ schema = Schema([
     ),
     Entity('work_type',
         [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name')),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name')),
         ]
     ),
     Entity('release_group',
         [
-            IntegerField('pk', Column('id')),
-            Field('mbid', Column('gid')),
-            Field('disambiguation', Column('comment')),
-            Field('name', Column('name', ForeignColumn('release_name', 'name'))),
-            #Field('type', Column('type', ForeignColumn('release_group_primary_type', 'name', null=True))),
-            #MultiField('mbid', ForeignColumn('release_group_gid_redirect', 'gid', backref='new_id')),
-            #MultiField('type',
-                #ForeignColumn('release_group_secondary_type_join', 'secondary_type',
-                    #ForeignColumn('release_group_secondary_type', 'name'))),
-            #Field('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
-            #MultiField('alias', ForeignColumn('release', 'name', ForeignColumn('release_name', 'name'))),
+            IntegerProperty('pk', Column('id')),
+            Property('mbid', Column('gid')),
+            Property('disambiguation', Column('comment')),
+            Property('name', Column('name', ForeignColumn('release_name', 'name'))),
+            #Property('type', Column('type', ForeignColumn('release_group_primary_type', 'name', null=True))),
+            #Property('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
         ],
         [
             Relation(
-                'OF_TYPE',
+                'RELEASE_GROUP_TYPE',
                 start=Reference('release_group', Column('id')),
                 end=Reference('release_group_primary_type', Column('type')),
                 properties=[]
@@ -498,26 +487,23 @@ schema = Schema([
     ),
     Entity('release_group_primary_type',
         [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name')),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name')),
         ]
     ),
     Entity('release',
         [
-            IntegerField('pk', Column('id')),
-            Field('mbid', Column('gid')),
-            Field('disambiguation', Column('comment')),
-            #Field('barcode', Column('barcode')),
-            Field('name', Column('name', ForeignColumn('release_name', 'name'))),
-            #Field('status', Column('status', ForeignColumn('release_status', 'name', null=True))),
-            #Field('type', Column('release_group', ForeignColumn('release_group', 'type', ForeignColumn('release_group_primary_type', 'name', null=True)))),
-            #Field('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
-            #Field('country', Column('country', ForeignColumn('country', 'name', null=True))),
-            #Field('country', Column('country', ForeignColumn('country', 'iso_code', null=True))),
-            #MultiField('mbid', ForeignColumn('release_gid_redirect', 'gid', backref='new_id')),
-            #MultiField('catno', ForeignColumn('release_label', 'catalog_number')),
-            #MultiField('label', ForeignColumn('release_label', 'label', ForeignColumn('label', 'name', ForeignColumn('label_name', 'name')))),
-            #Field('alias', Column('release_group', ForeignColumn('release_group', 'name', ForeignColumn('release_name', 'name')))),
+            IntegerProperty('pk', Column('id')),
+            Property('mbid', Column('gid')),
+            Property('disambiguation', Column('comment')),
+            #Property('barcode', Column('barcode')),
+            Property('name', Column('name', ForeignColumn('release_name', 'name'))),
+            #Property('status', Column('status', ForeignColumn('release_status', 'name', null=True))),
+            #Property('type', Column('release_group', ForeignColumn('release_group', 'type', ForeignColumn('release_group_primary_type', 'name', null=True)))),
+            #Property('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
+            #Property('country', Column('country', ForeignColumn('country', 'name', null=True))),
+            #Property('country', Column('country', ForeignColumn('country', 'iso_code', null=True))),
+            #Property('alias', Column('release_group', ForeignColumn('release_group', 'name', ForeignColumn('release_name', 'name')))),
         ],
         [
             Relation(
@@ -548,8 +534,8 @@ schema = Schema([
     ),
     Entity('release_status',
         [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name')),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name')),
         ]
     ),
     Entity('release_label',
@@ -559,14 +545,16 @@ schema = Schema([
                 'RELEASED_ON',
                 start=Reference('release', Column('release')),
                 end=Reference('label', Column('label')),
-                properties=[]
+                properties=[
+                    Property('catalog_number', Column('catalog_number')),
+                ]
             ),
         ]
     ),
     Entity('release_packaging',
         [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name')),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name')),
         ]
     ),
     Entity('release_country',
@@ -579,15 +567,18 @@ schema = Schema([
                 end=Reference('area',
                                 Column('country',
                                     ForeignColumn('country_area', 'area'))),
-                properties=[]
+                properties=[
+                    Property('year', Column('date_year')),
+                    Property('month', Column('date_month')),
+                    Property('day', Column('date_day')),
+                ]
             ),
         ]
     ),
     Entity('medium',
-        # do not create nodes
         [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name')),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name')),
         ],
         [
             Relation(
@@ -606,8 +597,8 @@ schema = Schema([
     ),
     Entity('medium_format',
         [
-            IntegerField('pk', Column('id')),
-            Field('name', Column('name')),
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name')),
         ],
         [
             Relation(
@@ -620,13 +611,11 @@ schema = Schema([
     ),
     Entity('recording',
         [
-            IntegerField('pk', Column('id')),
-            Field('mbid', Column('gid')),
-            Field('disambiguation', Column('comment')),
-            Field('name', Column('name', ForeignColumn('track_name', 'name'))),
-            #Field('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
-            #MultiField('mbid', ForeignColumn('recording_gid_redirect', 'gid', backref='new_id')),
-            #MultiField('alias', ForeignColumn('track', 'name', ForeignColumn('track_name', 'name'))),
+            IntegerProperty('pk', Column('id')),
+            Property('mbid', Column('gid')),
+            Property('disambiguation', Column('comment')),
+            Property('name', Column('name', ForeignColumn('track_name', 'name'))),
+            #Property('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
         ],
         [
             Relation(
@@ -639,9 +628,9 @@ schema = Schema([
     ),
     Entity('track',
         [
-            IntegerField('pk', Column('id')),
-            Field('mbid', Column('gid')),
-            Field('name', Column('name', ForeignColumn('track_name', 'name'))),
+            IntegerProperty('pk', Column('id')),
+            Property('mbid', Column('gid')),
+            Property('name', Column('name', ForeignColumn('track_name', 'name'))),
         ],
         [
             Relation(
@@ -666,9 +655,9 @@ schema = Schema([
     ),
     Entity('url',
         [
-            IntegerField('pk', Column('id')),
-            Field('mbid', Column('gid')),
-            Field('name', Column('url')),
+            IntegerProperty('pk', Column('id')),
+            Property('mbid', Column('gid')),
+            Property('name', Column('url')),
         ],
     ),
     ]
@@ -688,5 +677,4 @@ exporter.set_rels_filename(relations_filename)
 multiple=False
 print exporter.create_mapping_table_query(multiple=multiple)
 print exporter.create_nodes_query(multiple=multiple)
-
 print exporter.create_relationships_query(multiple=False)

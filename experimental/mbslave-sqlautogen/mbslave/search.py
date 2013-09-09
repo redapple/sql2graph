@@ -1,22 +1,19 @@
 import itertools
 from collections import namedtuple
 
-#Entity = namedtuple('Entity', ['name', 'fields', 'relations'])
-DefaultField = namedtuple('Field', ['name', 'column'])
+DefaultProperty = namedtuple('DefaultProperty', ['name', 'column'])
 Relation = namedtuple('Relation', ['rtype', 'start', 'end', 'properties'])
 Reference = namedtuple('Reference', ['entity', 'key_column'])
-#MultiField = namedtuple('MultiField', ['name', 'column'])
 
-
-class Field(DefaultField):
+class Property(DefaultProperty):
     maptype = str
 
 
-class IntegerField(Field):
+class IntegerProperty(Property):
     maptype = int
 
 
-class BooleanField(Field):
+class BooleanProperty(Property):
     maptype = bool
 
 
@@ -46,14 +43,7 @@ class Entity(object):
 
     def iter_single_fields(self, name=None):
         for field in self.fields:
-            if isinstance(field, Field):
-                if name is not None and field.name != name:
-                    continue
-                yield field
-
-    def iter_multi_fields(self, name=None):
-        for field in self.fields:
-            if isinstance(field, MultiField):
+            if isinstance(field, Property):
                 if name is not None and field.name != name:
                     continue
                 yield field
@@ -142,7 +132,6 @@ class SchemaHelper(object):
         tables = set([kind])
         #columns = ['%s.id' % (kind,)]
         columns = ["'%s' as kind" % (kind,)]
-        names = []
 
         for p, ptype in properties:
             if not entity.fields_by_name.get(p):
@@ -165,18 +154,17 @@ class SchemaHelper(object):
                 column = column.foreign
 
             columns.append('%s.%s%s' % (table, column.name, ' AS "%s"' % field.name if field.name else ''))
-            names.append(field.name)
 
         return columns, joins
 
 
     def iter_entity_relations(self, db, kind, properties=[]):
+
         entity = self.schema[kind]
 
         tables = set([kind])
         fields = []
-        #columns = ['%s.id' % (kind,)]
-        names = []
+
         relations = list(entity.iter_relations())
 
         output_relations = []
@@ -213,7 +201,29 @@ class SchemaHelper(object):
             else:
                 columns.append("'%s' AS rel_type" % rel.rtype)
 
-            # FIXME: add other properties
+            relation_properties = dict([(p.name, p) for p in rel.properties])
+            for prop_name, prop_type in properties:
+
+                if prop_name not in relation_properties.keys():
+                    if prop_type == int:
+                        columns.append('0 AS "%s"' % prop_name)
+                    else:
+                        columns.append('NULL AS "%s"' % prop_name)
+                    continue
+
+                table = kind
+                column = relation_properties[prop_name].column
+                while column.foreign is not None:
+                    foreign_table = table + '__' + column.name + '__' + column.foreign.table
+                    if foreign_table not in tables:
+                        join = 'LEFT JOIN' if column.foreign.null else 'JOIN'
+                        joins.append('%(join)s %(parent)s AS %(label)s ON %(label)s.id = %(child)s.%(child_column)s' % dict(
+                            join=join, parent=column.foreign.table, child=table, child_column=column.name, label=foreign_table))
+                        tables.add(foreign_table)
+                    table = foreign_table
+                    column = column.foreign
+
+                columns.append('%s.%s%s' % (table, column.name, ' AS "%s"' % prop_name if prop_name else ''))
 
             # start/end entities
             start, end = rel.start, rel.end
@@ -260,7 +270,7 @@ class SchemaHelper(object):
         for kind in self.entities:
             entity = self.schema[kind]
             relations.update(
-                set([p for r in entity.iter_relations() for p in r.properties])
+                set([(p.name, p.maptype) for r in entity.iter_relations() for p in r.properties])
             )
         return list(relations)
 
