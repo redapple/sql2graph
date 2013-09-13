@@ -2,7 +2,7 @@
 
 import os
 import sys
-from lxml import etree as ET
+import optparse
 from mbslave import Config, connect_db
 from mbslave.search import generate_iter_query
 from mbslave.search import SchemaHelper, Schema, Column, ForeignColumn, \
@@ -128,7 +128,8 @@ ANALYZE entity_mapping;
     def create_nodes_query(self, multiple=False):
 
         node_queries = []
-        for columns, joins in self.schema.fetch_all(self.cfg, self.db, self.all_properties):
+        for columns, joins in self.schema.fetch_all(self.cfg, self.db,
+            self.all_properties if not multiple else []):
             if columns and joins:
                 node_queries.append(generate_iter_query(columns, joins))
 
@@ -163,13 +164,12 @@ ANALYZE entity_mapping;
 
         rels_queries = []
 
-        for relations in self.schema.fetch_all_relations(self.cfg, self.db, self.all_relations_properties):
-            if not relations:
-                continue
-            for columns, joins in relations:
-                rels_queries.append(generate_iter_query(columns, joins))
-
         if multiple:
+            for relations in self.schema.fetch_all_relations(self.cfg, self.db):
+                if not relations:
+                    continue
+                for columns, joins in relations:
+                    rels_queries.append(generate_iter_query(columns, joins))
             qs = []
             for i, q in enumerate(rels_queries, start=1):
                 qs.append(
@@ -177,6 +177,11 @@ ANALYZE entity_mapping;
                         self.relations_filename.replace('.csv', '.%04d.csv' % i)))
             return "\n".join(qs)
         else:
+            for relations in self.schema.fetch_all_relations(self.cfg, self.db, self.all_relations_properties):
+                if not relations:
+                    continue
+                for columns, joins in relations:
+                    rels_queries.append(generate_iter_query(columns, joins))
             return self.generate_tsvfile_output_query(
                 generate_union_query(rels_queries),
                 self.relations_filename)
@@ -667,14 +672,23 @@ schema = Schema([
 
 
 # --------------------
-nodes_filename = '/tmp/musicbrainz__nodes__full.csv'
-relations_filename = '/tmp/musicbrainz__rels__full.csv'
+
+option_parser = optparse.OptionParser()
+option_parser.add_option("--nodes", dest="nodes_filename",
+    help="Nodes file", default='/tmp/musicbrainz__nodes__full.csv')
+option_parser.add_option("--relations", dest="relations_filename",
+    help="Relationships file", default='/tmp/musicbrainz__rels__full.csv')
+option_parser.add_option("--multiple", action="store_true",
+    dest="multiple_files",
+    help="whether to output multiple nodes files and relationships files",
+    default=False)
+(options, args) = option_parser.parse_args()
+
 
 exporter = SQL2GraphExporter('mbslave.conf', schema, entities)
-exporter.set_nodes_filename(nodes_filename)
-exporter.set_rels_filename(relations_filename)
+exporter.set_nodes_filename(options.nodes_filename)
+exporter.set_rels_filename(options.relations_filename)
 
-multiple=False
-print exporter.create_mapping_table_query(multiple=multiple)
-print exporter.create_nodes_query(multiple=multiple)
-print exporter.create_relationships_query(multiple=False)
+print exporter.create_mapping_table_query(multiple=options.multiple_files)
+print exporter.create_nodes_query(multiple=options.multiple_files)
+print exporter.create_relationships_query(multiple=options.multiple_files)

@@ -133,6 +133,8 @@ class SchemaHelper(object):
         #columns = ['%s.id' % (kind,)]
         columns = ["'%s' as kind" % (kind,)]
 
+        if not properties:
+            properties = [(f.name, f.maptype) for f in entity.iter_single_fields()]
         for p, ptype in properties:
             if not entity.fields_by_name.get(p):
                 if ptype == int:
@@ -201,7 +203,13 @@ class SchemaHelper(object):
             else:
                 columns.append("'%s' AS rel_type" % rel.rtype)
 
-            relation_properties = dict([(p.name, p) for p in rel.properties])
+
+            # FIXME: that's really ugly...
+            relation_properties = [(p.name, p) for p in rel.properties]
+            if not properties:
+                properties = relation_properties
+
+            relation_properties = dict(relation_properties)
             for prop_name, prop_type in properties:
 
                 if prop_name not in relation_properties.keys():
@@ -278,7 +286,7 @@ class SchemaHelper(object):
         for entity in self.entities:
             yield self.fetch_entities(db, entity, properties)
 
-    def fetch_all_relations(self, cfg, db, properties):
+    def fetch_all_relations(self, cfg, db, properties=[]):
         for entity in self.entities:
             yield self.fetch_relations(db, entity, properties)
 
