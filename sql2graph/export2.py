@@ -7,7 +7,12 @@ from sql2graph.schema2 import SchemaHelper, Schema, Column, ForeignColumn, \
 from sql2graph.schema2 import indent, generate_union_query
 
 class SQL2GraphExporter(object):
-    def __init__(self, cfgfilename, schema, entities):
+
+    # to change the TSV header line
+    nodes_header_override = None
+    rels_header_override = None # not used currently
+
+    def __init__(self, schema, entities):
         self.cfg = None
         self.db = None
 
@@ -21,8 +26,6 @@ class SQL2GraphExporter(object):
 
     def set_rels_filename(self, filename):
         self.relations_filename = filename
-
-
 
     @classmethod
     def generate_tsvfile_output_query(cls, query, output_filename, modify_headers={}):
@@ -52,16 +55,14 @@ TO '%(filename)s' CSV HEADER DELIMITER E'\\t';
     # --- create temporary mapping table
     def create_mapping_table_query(self, multiple=False):
         print """
-        -- Create the mapping table
-        -- between (entity, pk) tuples and incrementing node IDs
-        """
-
+-- Create the mapping table
+-- between (entity, pk) tuples and incrementing node IDs
+"""
         node_queries = []
         for columns, joins in self.schema.fetch_all(self.cfg, self.db,
                             [(n,t) for n, t in self.all_properties if n in ('kind', 'pk')]):
             if columns and joins:
                 node_queries.append(generate_iter_query(columns, joins))
-
 
         if multiple:
 
@@ -129,13 +130,11 @@ ANALYZE entity_mapping;
             if columns and joins:
                 node_queries.append(generate_iter_query(columns, joins))
 
-        headers = dict([(name, name) for (name, maptype) in self.all_properties])
-        headers.update({
-                "mbid": '"mbid:string:mbid"',
-                "kind": '"kind:string:mbid"',
-                "pk":   '"pk:int:mbid"',
-                "name": '"name:string:mb"',
-            })
+        headers = None
+
+        if self.nodes_header_override:
+            headers = dict([(name, name) for (name, maptype) in self.all_properties])
+            headers.update(self.nodes_header_override)
 
         if multiple:
             qs = []

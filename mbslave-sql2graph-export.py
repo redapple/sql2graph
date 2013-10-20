@@ -23,11 +23,20 @@ option_parser.add_option("--multiple", action="store_true",
 (options, args) = option_parser.parse_args()
 
 
-exporter = SQL2GraphExporter('mbslave.conf', mbschema, mbentities)
+class MusicBrainzExporter(SQL2GraphExporter):
+    _nodes_header_override = {
+            "mbid": '"mbid:string:mbid"',
+            "kind": '"kind:string:mbid"',
+            "pk":   '"pk:int:mbid"',
+            "name": '"name:string:mb"',
+        }
+
+
+exporter = MusicBrainzExporter(mbschema, mbentities)
 
 exporter.set_nodes_filename(options.nodes_filename)
 exporter.set_rels_filename(options.relations_filename)
 
-print exporter.create_mapping_table_query(multiple=options.multiple_files)
+#print exporter.create_mapping_table_query(multiple=options.multiple_files)
 print exporter.create_nodes_query(multiple=options.multiple_files)
-print exporter.create_relationships_query(multiple=options.multiple_files)
+#print exporter.create_relationships_query(multiple=options.multiple_files)
