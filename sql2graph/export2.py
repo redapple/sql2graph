@@ -17,6 +17,9 @@ class SQL2GraphExporter(object):
         self.db = None
 
         self.schema = SchemaHelper(schema, entities)
+        self.entity_limit = None
+        self.nodes_filename = None
+        self.relations_filename = None
 
         self.all_properties = self.schema.fetch_all_fields(self.cfg, self.db)
         self.all_relations_properties = self.schema.fetch_all_relations_properties(self.cfg, self.db)
@@ -26,6 +29,10 @@ class SQL2GraphExporter(object):
 
     def set_rels_filename(self, filename):
         self.relations_filename = filename
+
+    def set_entity_export_limit(self, limit):
+        if limit:
+            self.entity_limit = limit
 
     @classmethod
     def generate_tsvfile_output_query(cls, query, output_filename, modify_headers={}):
@@ -62,7 +69,8 @@ TO '%(filename)s' CSV HEADER DELIMITER E'\\t';
         for columns, joins in self.schema.fetch_all(self.cfg, self.db,
                             [(n,t) for n, t in self.all_properties if n in ('kind', 'pk')]):
             if columns and joins:
-                node_queries.append(generate_iter_query(columns, joins))
+                node_queries.append(generate_iter_query(columns, joins,
+                    limit=self.entity_limit))
 
         if multiple:
 
@@ -128,7 +136,8 @@ ANALYZE entity_mapping;
         for columns, joins in self.schema.fetch_all(self.cfg, self.db,
             self.all_properties if not multiple else []):
             if columns and joins:
-                node_queries.append(generate_iter_query(columns, joins))
+                node_queries.append(generate_iter_query(columns, joins,
+                    limit=self.entity_limit))
 
         headers = None
 
