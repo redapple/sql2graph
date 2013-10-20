@@ -27,26 +27,37 @@ mbentities = [
     'area',
     'area_alias',
     'area_type',
+
+    'place',
+    'place_alias',
+
     'artist',
     'artist_alias',
     'artist_type',
     'artist_credit',
     'artist_credit_name',
     'gender',
+
     'label',
     'label_type',
+
     'url',
+
     'release_group',
     'release_group_primary_type',
+
     'release',
     'release_country',
     'release_packaging',
     'release_status',
     'release_label',
+
     'recording',
     'track',
+
     'medium',
     'medium_format',
+
     'work',
     'work_type',
 ]
@@ -60,6 +71,7 @@ linked_entities = (
         ('area', 'recording'),
         ('area', 'release'),
         ('area', 'release_group'),
+        ('area', 'place'),
 
         ('artist', 'artist'),
         ('artist', 'label'),
@@ -68,6 +80,7 @@ linked_entities = (
         ('artist', 'release_group'),
         ('artist', 'url'),
         ('artist', 'work'),
+        ('artist', 'place'),
 
         ('label', 'label'),
         ('label', 'recording'),
@@ -75,6 +88,14 @@ linked_entities = (
         ('label', 'release_group'),
         ('label', 'url'),
         ('label', 'work'),
+        ('label', 'place'),
+
+        ('place', 'place'),
+        ('place', 'recording'),
+        ('place', 'release'),
+        ('place', 'release_group'),
+        ('place', 'url'),
+        ('place', 'work'),
 
         ('recording', 'recording'),
         ('recording', 'release'),
@@ -120,8 +141,7 @@ mbschema = Schema([
             ),
         ],
     ),
-    Entity(
-        'area_alias',
+    Entity('area_alias',
         [
             IntegerProperty('pk', Column('id')),
             Property('name', Column('name')),
@@ -137,12 +157,39 @@ mbschema = Schema([
             ),
         ]
     ),
+    Entity('place', [
+            IntegerProperty('pk', Column('id')),
+            Property('mbid', Column('gid')),
+            Property('name', Column('name')),
+            Property('type', Column('type', ForeignColumn('place_type', 'name', null=True))),
+        ],
+    ),
+    Entity('place_alias',
+        [
+            IntegerProperty('pk', Column('id')),
+            Property('name', Column('name')),
+            Property('type', Column('type', ForeignColumn('place_alias_type', 'name', null=True))),
+            Property('locale', Column('locale')),
+        ],
+        [
+            Relation(
+                'HAS_ALIAS',
+                start=Reference('place', Column('place')),
+                end=Reference('place_alias', Column('id')),
+                properties=[]
+            ),
+        ]
+    ),
     Entity('artist',
         [
             IntegerProperty('pk', Column('id')),
             Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
-            Property('name', Column('name', ForeignColumn('artist_name', 'name'))),
+
+            # schema change 2013-10-14
+            #Property('name', Column('name', ForeignColumn('artist_name', 'name'))),
+            Property('name', Column('name')),
+
             #Property('sort_name', Column('sort_name', ForeignColumn('artist_name', 'name'))),
             #Property('country', Column('country', ForeignColumn('country', 'name', null=True))),
             #Property('country', Column('country', ForeignColumn('country', 'iso_code', null=True))),
@@ -157,13 +204,13 @@ mbschema = Schema([
                 properties=[]
             ),
             Relation(
-                'BEGAN_IN',
+                'BEGAN_IN_AREA',
                 start=Reference('artist', Column('id')),
                 end=Reference('area', Column('begin_area')),
                 properties=[]
             ),
             Relation(
-                'ENDED_IN',
+                'ENDED_IN_AREA',
                 start=Reference('artist', Column('id')),
                 end=Reference('area', Column('end_area')),
                 properties=[]
@@ -185,7 +232,11 @@ mbschema = Schema([
     Entity('artist_alias',
         [
             IntegerProperty('pk', Column('id')),
-            Property('name', Column('name', ForeignColumn('artist_name', 'name'))),
+
+            # schema change 2013-10-14
+            #Property('name', Column('name', ForeignColumn('artist_name', 'name'))),
+            Property('name', Column('name')),
+
             Property('type', Column('type', ForeignColumn('artist_alias_type', 'name', null=True))),
         ],
         [
@@ -206,7 +257,10 @@ mbschema = Schema([
     Entity('artist_credit',
         fields = [
             IntegerProperty('pk', Column('id')),
-            Property('name', Column('name', ForeignColumn('artist_name', 'name'))),
+
+            # schema change 2013-10-14
+            #Property('name', Column('name', ForeignColumn('artist_name', 'name'))),
+            Property('name', Column('name')),
         ]
     ),
     Entity('artist_credit_name',
@@ -233,7 +287,11 @@ mbschema = Schema([
             Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
             IntegerProperty('code', Column('label_code')),
-            Property('name', Column('name', ForeignColumn('label_name', 'name'))),
+
+            # schema change 2013-10-14
+            #Property('name', Column('name', ForeignColumn('label_name', 'name'))),
+            Property('name', Column('name')),
+
             #Property('sort_name', Column('sort_name', ForeignColumn('label_name', 'name'))),
             #Property('country', Column('country', ForeignColumn('country', 'name', null=True))),
             #Property('country', Column('country', ForeignColumn('country', 'iso_code', null=True))),
@@ -247,7 +305,7 @@ mbschema = Schema([
                 properties=[]
             ),
             Relation(
-                'FROM',
+                'FROM_AREA',
                 start=Reference('label', Column('id')),
                 end=Reference('area', Column('area')),
                 properties=[]
@@ -265,7 +323,11 @@ mbschema = Schema([
             IntegerProperty('pk', Column('id')),
             Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
-            Property('name', Column('name', ForeignColumn('work_name', 'name'))),
+
+            # schema change 2013-10-14
+            #Property('name', Column('name', ForeignColumn('work_name', 'name'))),
+            Property('name', Column('name')),
+
             #Property('type', Column('type', ForeignColumn('work_type', 'name', null=True))),
         ],
         [
@@ -288,7 +350,11 @@ mbschema = Schema([
             IntegerProperty('pk', Column('id')),
             Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
-            Property('name', Column('name', ForeignColumn('release_name', 'name'))),
+
+            # schema change 2013-10-14
+            #Property('name', Column('name', ForeignColumn('release_name', 'name'))),
+            Property('name', Column('name')),
+
             #Property('type', Column('type', ForeignColumn('release_group_primary_type', 'name', null=True))),
             #Property('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
         ],
@@ -319,7 +385,11 @@ mbschema = Schema([
             Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
             #Property('barcode', Column('barcode')),
-            Property('name', Column('name', ForeignColumn('release_name', 'name'))),
+
+            # schema change 2013-10-14
+            #Property('name', Column('name', ForeignColumn('release_name', 'name'))),
+            Property('name', Column('name')),
+
             #Property('status', Column('status', ForeignColumn('release_status', 'name', null=True))),
             #Property('type', Column('release_group', ForeignColumn('release_group', 'type', ForeignColumn('release_group_primary_type', 'name', null=True)))),
             #Property('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
@@ -390,9 +460,9 @@ mbschema = Schema([
                                 Column('country',
                                     ForeignColumn('country_area', 'area'))),
                 properties=[
-                    Property('year', Column('date_year')),
-                    Property('month', Column('date_month')),
-                    Property('day', Column('date_day')),
+                    IntegerProperty('year', Column('date_year')),
+                    IntegerProperty('month', Column('date_month')),
+                    IntegerProperty('day', Column('date_day')),
                 ]
             ),
         ]
@@ -404,7 +474,7 @@ mbschema = Schema([
         ],
         [
             Relation(
-                'MEDIUM',
+                'ON_MEDIUM',
                 start=Reference('release', Column('release')),
                 end=Reference('medium', Column('id')),
                 properties=[]
@@ -436,7 +506,11 @@ mbschema = Schema([
             IntegerProperty('pk', Column('id')),
             Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
-            Property('name', Column('name', ForeignColumn('track_name', 'name'))),
+
+            # schema change 2013-10-14
+            #Property('name', Column('name', ForeignColumn('track_name', 'name'))),
+            Property('name', Column('name')),
+
             #Property('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
         ],
         [
@@ -452,7 +526,10 @@ mbschema = Schema([
         [
             IntegerProperty('pk', Column('id')),
             Property('mbid', Column('gid')),
-            Property('name', Column('name', ForeignColumn('track_name', 'name'))),
+
+            # schema change 2013-10-14
+            #Property('name', Column('name', ForeignColumn('track_name', 'name'))),
+            Property('name', Column('name')),
         ],
         [
             Relation(

@@ -4,7 +4,8 @@ import os
 import sys
 import optparse
 from sql2graph.export2 import SQL2GraphExporter
-from musicbrainz_schema import mbschema, mbentities
+#from musicbrainz_schema import mbschema, mbentities
+from musicbrainz_schema__20131014 import mbschema, mbentities
 
 # ----------------------------------------------------------------------
 
@@ -20,6 +21,7 @@ option_parser.add_option("--multiple", action="store_true",
     dest="multiple_files",
     help="whether to output multiple nodes files and relationships files",
     default=MULTIPLE_FILES)
+option_parser.add_option("--limit", type="int", dest="limit", default=None)
 (options, args) = option_parser.parse_args()
 
 
@@ -29,12 +31,16 @@ class MusicBrainzExporter(SQL2GraphExporter):
             "kind": '"kind:string:mbid"',
             "pk":   '"pk:int:mbid"',
             "name": '"name:string:mb"',
+            "type": '"typ:string:mbid"',
         }
 
 exporter = MusicBrainzExporter(mbschema, mbentities)
 
 exporter.set_nodes_filename(options.nodes_filename)
 exporter.set_rels_filename(options.relations_filename)
+
+if options.limit:
+    exporter.set_entity_export_limit(options.limit)
 
 print exporter.create_mapping_table_query(multiple=options.multiple_files)
 print exporter.create_nodes_query(multiple=options.multiple_files)
