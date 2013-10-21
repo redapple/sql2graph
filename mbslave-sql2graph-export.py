@@ -29,9 +29,11 @@ class MusicBrainzExporter(SQL2GraphExporter):
     nodes_header_override = {
             "mbid": '"mbid:string:mbid"',
             "kind": '"kind:string:mbid"',
-            "pk":   '"pk:int:mbid"',
+            "pk":   '"pk:long:mbid"',
             "name": '"name:string:mb"',
             "type": '"typ:string:mbid"',
+            "latitude": '"latitude:float"',
+            "longitude": '"longitude:float"',
         }
 
 exporter = MusicBrainzExporter(mbschema, mbentities)

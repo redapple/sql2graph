@@ -162,6 +162,8 @@ mbschema = Schema([
             Property('mbid', Column('gid')),
             Property('name', Column('name')),
             Property('type', Column('type', ForeignColumn('place_type', 'name', null=True))),
+            IntegerProperty('latitude', Column('coordinates[0]')),
+            IntegerProperty('longitude', Column('coordinates[1]')),
         ],
     ),
     Entity('place_alias',
