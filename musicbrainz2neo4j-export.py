@@ -44,6 +44,12 @@ exporter.set_rels_filename(options.relations_filename)
 if options.limit:
     exporter.set_entity_export_limit(options.limit)
 
+print r"""
+-- Change TABs to spaces in "name" column for "track" and "work" tables
+-- somehow these TABs can make batch-import CSV parsing choked
+UPDATE track SET name=translate(name, E'\t', ' ') WHERE name LIKE E'%\t%';
+UPDATE work SET name=translate(name, E'\t', ' ') WHERE name LIKE E'%\t%';
+"""
 print exporter.create_mapping_table_query(multiple=options.multiple_files)
 print exporter.create_nodes_query(multiple=options.multiple_files)
 print exporter.create_relationships_query(multiple=options.multiple_files)
