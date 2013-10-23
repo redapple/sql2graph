@@ -11,6 +11,7 @@ class SQL2GraphExporter(object):
     # to change the TSV header line
     nodes_header_override = None
     rels_header_override = None # not used currently
+    output_encoding = 'UTF8'
 
     def __init__(self, schema, entities):
         self.cfg = None
@@ -55,8 +56,11 @@ AS wrapped
 COPY(
 %(query)s
 )
-TO '%(filename)s' CSV HEADER DELIMITER E'\\t';
-""" % dict(query=indent(query, '   '), filename=output_filename)
+TO '%(filename)s' CSV HEADER
+DELIMITER E'\\t'
+ENCODING '%(encoding)s';
+""" % dict(query=indent(query, '   '), filename=output_filename,
+        encoding=cls.output_encoding)
 
 
     # --- create temporary mapping table
