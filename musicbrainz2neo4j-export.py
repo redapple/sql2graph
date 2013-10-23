@@ -4,8 +4,7 @@ import os
 import sys
 import optparse
 from sql2graph.export2 import SQL2GraphExporter
-#from musicbrainz_schema import mbschema, mbentities
-from musicbrainz_schema__20131014 import mbschema, mbentities
+from musicbrainz_schema import mbschema, mbentities
 
 # ----------------------------------------------------------------------
 
@@ -27,11 +26,11 @@ option_parser.add_option("--limit", type="int", dest="limit", default=None)
 
 class MusicBrainzExporter(SQL2GraphExporter):
     nodes_header_override = {
-            "mbid": '"mbid:string:mbid"',
-            "kind": '"kind:string:mbid"',
-            "pk":   '"pk:long:mbid"',
-            "name": '"name:string:mb"',
-            "type": '"typ:string:mbid"',
+            "mbid": '"mbid:string:mb_exact"',
+            "kind": '"kind:string:mb_exact"',
+            "pk":   '"pk:long:mb_exact"',
+            "name": '"name:string:mb_fulltext"',
+            "type": '"typ:string:mb_exact"',
             "latitude": '"latitude:float"',
             "longitude": '"longitude:float"',
         }
