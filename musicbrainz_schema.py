@@ -107,7 +107,7 @@ mbschema = Schema([
     ),
     Entity('area', [
             IntegerProperty('pk', Column('id')),
-            Property('mb_exact', Column('gid')),
+            Property('mbid', Column('gid')),
             Property('name', Column('name')),
             #Property('type', Column('type', ForeignColumn('area_type', 'name', null=True))),
         ],
@@ -140,7 +140,7 @@ mbschema = Schema([
     Entity('artist',
         [
             IntegerProperty('pk', Column('id')),
-            Property('mb_exact', Column('gid')),
+            Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
             Property('name', Column('name', ForeignColumn('artist_name', 'name'))),
             #Property('sort_name', Column('sort_name', ForeignColumn('artist_name', 'name'))),
@@ -230,7 +230,7 @@ mbschema = Schema([
     Entity('label',
         [
             IntegerProperty('pk', Column('id')),
-            Property('mb_exact', Column('gid')),
+            Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
             IntegerProperty('code', Column('label_code')),
             Property('name', Column('name', ForeignColumn('label_name', 'name'))),
@@ -263,7 +263,7 @@ mbschema = Schema([
     Entity('work',
         [
             IntegerProperty('pk', Column('id')),
-            Property('mb_exact', Column('gid')),
+            Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
             Property('name', Column('name', ForeignColumn('work_name', 'name'))),
             #Property('type', Column('type', ForeignColumn('work_type', 'name', null=True))),
@@ -286,7 +286,7 @@ mbschema = Schema([
     Entity('release_group',
         [
             IntegerProperty('pk', Column('id')),
-            Property('mb_exact', Column('gid')),
+            Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
             Property('name', Column('name', ForeignColumn('release_name', 'name'))),
             #Property('type', Column('type', ForeignColumn('release_group_primary_type', 'name', null=True))),
@@ -316,7 +316,7 @@ mbschema = Schema([
     Entity('release',
         [
             IntegerProperty('pk', Column('id')),
-            Property('mb_exact', Column('gid')),
+            Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
             #Property('barcode', Column('barcode')),
             Property('name', Column('name', ForeignColumn('release_name', 'name'))),
@@ -434,7 +434,7 @@ mbschema = Schema([
     Entity('recording',
         [
             IntegerProperty('pk', Column('id')),
-            Property('mb_exact', Column('gid')),
+            Property('mbid', Column('gid')),
             Property('disambiguation', Column('comment')),
             Property('name', Column('name', ForeignColumn('track_name', 'name'))),
             #Property('artist', Column('artist_credit', ForeignColumn('artist_credit', 'name', ForeignColumn('artist_name', 'name')))),
@@ -451,7 +451,7 @@ mbschema = Schema([
     Entity('track',
         [
             IntegerProperty('pk', Column('id')),
-            Property('mb_exact', Column('gid')),
+            Property('mbid', Column('gid')),
             Property('name', Column('name', ForeignColumn('track_name', 'name'))),
         ],
         [
@@ -478,7 +478,7 @@ mbschema = Schema([
     Entity('url',
         [
             IntegerProperty('pk', Column('id')),
-            Property('mb_exact', Column('gid')),
+            Property('mbid', Column('gid')),
             Property('name', Column('url')),
         ],
     ),
