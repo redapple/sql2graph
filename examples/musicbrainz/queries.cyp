@@ -1,40 +1,37 @@
 // Countries and their anthem
-START a=node:mbid(kind="area") MATCH (a)-[r?:anthem]-(w) WHERE a.typ="Country" RETURN a, a.name, w.name?;
-
-// Countries without an anthem (in MusicBrainz)
-START a=node:mb(kind="area")
-MATCH (a)-[r?:anthem]-(w)
-WHERE a.etype="Country" AND r is NULL
+START a=node:mb_exact(kind="area") 
+MATCH (country)<-[:AREA_TYPE]-(a)-[r?:anthem]-(w) 
+WHERE country.name="Country" 
 RETURN a, a.name, w.name?;
 
-// alternative
-START a=node:mb(kind="area")
-WHERE a.etype="Country" AND NOT((a)-[:anthem]-())
-RETURN a, a.name;
+// Countries without an anthem (in MusicBrainz)
+START a=node:mb_exact(kind="area") 
+MATCH (country)<-[:AREA_TYPE]-(a)
+WHERE country.name="Country" AND NOT((a)-[:anthem]-())
+RETURN id(a), a.name;
 
-// alternative with more property filters in START
-START a=node:mb("kind:area AND etype:Country")
-WHERE NOT((a)-[:anthem]-())
-RETURN a, a.name;
 
 // list all Album releases for an artist by name
-START mp=node:mb(name="Maxïmo Park")
-> MATCH (mp)-[:CREDITED_AS]->(c)-[:CREDITED_ON]->(rg)-[:OF_TYPE]-(o), (rg)<-[:PART_OF]-(r)
-> WHERE rg.kind="release_group" AND o.name="Album"
-> RETURN rg.name, count(r);
+//START mp=node:mb_fulltext(name="Maxïmo Park")
+
+START mp=node:mb_fulltext(name='ABBA')
+MATCH (mp)-[:CREDITED_AS]->(c)-[:CREDITED_ON]->(rg)-[:RELEASE_GROUP_TYPE]->(o), (rg)<-[:PART_OF]-(r)
+WHERE rg.kind="release_group" AND o.name="Album"
+RETURN rg.name, count(r);
+
 
 //even faster is you know the cedit name
-START ac=node:mb(name="Maxïmo Park")
+START ac=node:mb_fulltext(name="ABBA")
 MATCH
-(ac)-[:CREDITED_ON]->(rg)-[:OF_TYPE]-(o),
+(ac)-[:CREDITED_ON]->(rg)-[:RELEASE_GROUP_TYPE]->(o),
 (rg)<-[:PART_OF]-(r), (r)-[:HAS_STATUS]->(rs)
 WHERE rg.kind="release_group" AND o.name="Album" AND rs.name="Official"
 RETURN rg.name, count(r), collect(DISTINCT r.name);
 
 //oder by DESCending number of releases
-START ac=node:mb(name="Led Zeppelin")
+START ac=node:mb_fulltext(name="Led Zeppelin")
 MATCH
-(ac)-[:CREDITED_ON]->(rg)-[:OF_TYPE]-(o),
+(ac)-[:CREDITED_ON]->(rg)-[:RELEASE_GROUP_TYPE]->(o),
 (rg)<-[:PART_OF]-(r),
 (r)-[:HAS_STATUS]->(rs) 
 WHERE rg.kind="release_group" 
@@ -44,8 +41,8 @@ RETURN rg.name, count(r) AS sum
 ORDER BY sum DESC;
 
 // war of first names
-START ac=node:mb("name:Bob")
-MATCH (ac)-[:CREDITED_ON]->(rg)-[:OF_TYPE]-(o),
+START ac=node:mb_fulltext("name:Bob")
+MATCH (ac)-[:CREDITED_ON]->(rg)-[:RELEASE_GROUP_TYPE]->(o),
 (rg)<-[:PART_OF]-(r), (r)-[:HAS_STATUS]->(rs)
 WHERE rg.kind="release_group" 
 AND o.name="Album" 
@@ -53,12 +50,11 @@ AND rs.name="Official"
 RETURN ac.name, count(r) AS sum ORDER BY sum DESC LIMIT 10;
 
 // WHo released the most?
-neo4j-sh (0)$ START ac=node:mbid(kind="artist_credit")
-MATCH (ac)-[:CREDITED_ON]->(rg)-[:OF_TYPE]-(o), 
+START ac=node:mb_exact(kind="artist_credit")
+MATCH (ac)-[:CREDITED_ON]->(rg)-[:RELEASE_GROUP_TYPE]->(o), 
 (rg)<-[:PART_OF]-(r), 
 (r)-[:HAS_STATUS]->(rs)
-WHERE rg.kind="release_group" 
-AND o.name="Album" 
+WHERE o.name="Album" 
 AND rs.name="Official" 
 RETURN ac.name, count(rg) AS sum 
 ORDER BY sum DESC 
@@ -89,13 +85,13 @@ LIMIT 10;
 // Madonna - 79239441-bfd5-4981-a70c-55c3f15c1287
 // Beyoncé - 859d0860-d480-4efd-970c-c05d5f1776b8
 
-neo4j-sh (0)$ START a=node:mbid(mbid="859d0860-d480-4efd-970c-c05d5f1776b8")
-> MATCH (a)-[r1:CREDITED_AS]-(ac)-[:CREDITED_ON]-(rec)-[r2]-(w) 
-> , (tr)-[:IS_RECORDING]-(rec)                                  
-> WHERE rec.kind="recording" and w.kind="work"                  
-> RETURN a.name, count(tr) AS nb_tracks,  type(r2), w.name      
-> ORDER BY nb_tracks DESC                                       
-> LIMIT 10;  
+START a=node:mb_exact(mbid="859d0860-d480-4efd-970c-c05d5f1776b8")
+MATCH (a)-[r1:CREDITED_AS]-(ac)-[:CREDITED_ON]-(rec)-[r2]-(w) 
+, (tr)-[:IS_RECORDING]-(rec)                                  
+WHERE rec.kind="recording" and w.kind="work"                  
+RETURN a.name, count(tr) AS nb_tracks,  type(r2), w.name      
+ORDER BY nb_tracks DESC                                       
+LIMIT 10;  
 +----------------------------------------------------------------------------+
 | a.name    | nb_tracks | type(r2)      | w.name                             |
 +----------------------------------------------------------------------------+
@@ -115,16 +111,16 @@ neo4j-sh (0)$ START a=node:mbid(mbid="859d0860-d480-4efd-970c-c05d5f1776b8")
 
 
 // most prolific writers/composers for some pop artists
-START a=node:mbid(mbid="859d0860-d480-4efd-970c-c05d5f1776b8")
+START a=node:mb_exact(mbid="859d0860-d480-4efd-970c-c05d5f1776b8")
 MATCH (a)-[r1:CREDITED_AS]-(ac)-[:CREDITED_ON]-(rec)-[r2]-(w), (tr)-[:IS_RECORDING]-(rec)                                  
 WHERE rec.kind="recording" and w.kind="work"
 RETURN w, count(tr) AS nb_tracks
 ORDER BY nb_tracks DESC  
-LIMIT 20
+LIMIT 20;
 
 
 
-START a=node:mbid(mbid="859d0860-d480-4efd-970c-c05d5f1776b8")
+START a=node:mb_exact(mbid="859d0860-d480-4efd-970c-c05d5f1776b8")
 MATCH (a)-[r1:CREDITED_AS]-(ac)-[:CREDITED_ON]-(rec)-[r2]-(w), (tr)-[:IS_RECORDING]-(rec)                                  
 WHERE rec.kind="recording" and w.kind="work"
 WITH a, w, count(tr) AS nb_tracks
@@ -132,10 +128,10 @@ ORDER BY nb_tracks DESC
 LIMIT 10
 MATCH w-[?:WRITER|COMPOSER]-(writer)
 WHERE writer<> a
-RETURN  w.name, collect(writer.name)
+RETURN  w.name, collect(writer.name);
 
 
-START a=node:mbid(mbid="859d0860-d480-4efd-970c-c05d5f1776b8")
+START a=node:mb_exact(mbid="859d0860-d480-4efd-970c-c05d5f1776b8")
 MATCH (a)-[r1:CREDITED_AS]-(ac)-[:CREDITED_ON]-(rec)-[r2]-(w), (tr)-[:IS_RECORDING]-(rec)                                  
 WHERE rec.kind="recording" and w.kind="work"
 WITH a, w, count(tr) AS nb_tracks
@@ -145,10 +141,10 @@ MATCH p=w-[z:WRITER|COMPOSER]-(writer)
 WHERE writer<> a
 WITH writer, count(p) AS nb_part
 RETURN  writer.name, nb_part
-ORDER BY nb_part DESC
+ORDER BY nb_part DESC;
 
 //Christina Aguilera: b202beb7-99bd-47e7-8b72-195c8d72ebdd
-START a=node:mbid(mbid="b202beb7-99bd-47e7-8b72-195c8d72ebdd")
+START a=node:mb_exact(mbid="b202beb7-99bd-47e7-8b72-195c8d72ebdd")
 MATCH (a)-[r1:CREDITED_AS]-(ac)-[:CREDITED_ON]-(rec)-[r2]-(w), (tr)-[:IS_RECORDING]-(rec)                                  
 WHERE rec.kind="recording" and w.kind="work"
 WITH a, w, count(tr) AS nb_tracks
@@ -158,11 +154,11 @@ MATCH p=w-[z:WRITER|COMPOSER]-(writer)
 WHERE writer<> a
 WITH writer, count(p) AS nb_part
 RETURN  writer.name, nb_part
-ORDER BY nb_part DESC
+ORDER BY nb_part DESC;
 
 
 //122d63fc-8671-43e4-9752-34e846d62a9c
-START a=node:mbid(mbid="122d63fc-8671-43e4-9752-34e846d62a9c")
+START a=node:mb_exact(mbid="122d63fc-8671-43e4-9752-34e846d62a9c")
 MATCH (a)-[r1:CREDITED_AS]-(ac)-[:CREDITED_ON]-(rec)-[r2]-(w), (tr)-[:IS_RECORDING]-(rec)                                  
 WHERE rec.kind="recording" and w.kind="work"
 WITH a, w, count(tr) AS nb_tracks
@@ -172,10 +168,10 @@ MATCH p=w-[z:WRITER|COMPOSER]-(writer)
 WHERE writer<> a
 WITH writer, count(p) AS nb_part
 RETURN  writer.name, nb_part
-ORDER BY nb_part DESC
+ORDER BY nb_part DESC;
 
 // Lady gaga: 650e7db6-b795-4eb5-a702-5ea2fc46c848
-START a=node:mbid(mbid="650e7db6-b795-4eb5-a702-5ea2fc46c848")
+START a=node:mb_exact(mbid="650e7db6-b795-4eb5-a702-5ea2fc46c848")
 MATCH (a)-[r1:CREDITED_AS]-(ac)-[:CREDITED_ON]-(rec)-[r2]-(w), (tr)-[:IS_RECORDING]-(rec)                                  
 WHERE rec.kind="recording" and w.kind="work"
 WITH a, w, count(tr) AS nb_tracks
@@ -185,11 +181,11 @@ MATCH p=w-[z:WRITER|COMPOSER]-(writer)
 WHERE writer<> a
 WITH writer, count(p) AS nb_part
 RETURN  writer.name, nb_part
-ORDER BY nb_part DESC
+ORDER BY nb_part DESC;
 
 
 // Madonna
-START a=node:mbid(mbid="79239441-bfd5-4981-a70c-55c3f15c1287")
+START a=node:mb_exact(mbid="79239441-bfd5-4981-a70c-55c3f15c1287")
 MATCH (a)-[r1:CREDITED_AS]-(ac)-[:CREDITED_ON]-(rec)-[r2]-(w), (tr)-[:IS_RECORDING]-(rec)                                  
 WHERE rec.kind="recording" and w.kind="work"
 WITH a, w, count(tr) AS nb_tracks
@@ -199,10 +195,10 @@ MATCH p=w-[z:WRITER|COMPOSER]-(writer)
 WHERE writer<> a
 WITH writer, count(p) AS nb_part
 RETURN  writer.name, nb_part
-ORDER BY nb_part DESC
+ORDER BY nb_part DESC;
 
 // Britney Spears 45a663b5-b1cb-4a91-bff6-2bef7bbfdd76
-START a=node:mbid(mbid="45a663b5-b1cb-4a91-bff6-2bef7bbfdd76")
+START a=node:mb_exact(mbid="45a663b5-b1cb-4a91-bff6-2bef7bbfdd76")
 MATCH (a)-[r1:CREDITED_AS]-(ac)-[:CREDITED_ON]-(rec)-[r2]-(w), (tr)-[:IS_RECORDING]-(rec)                                  
 WHERE rec.kind="recording" and w.kind="work"
 WITH a, w, count(tr) AS nb_tracks
@@ -212,4 +208,4 @@ MATCH p=w-[z:WRITER|COMPOSER]-(writer)
 WHERE writer<> a
 WITH writer, count(p) AS nb_part
 RETURN  writer.name, nb_part
-ORDER BY nb_part DESC
+ORDER BY nb_part DESC;
