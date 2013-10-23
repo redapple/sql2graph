@@ -4,8 +4,7 @@ import os
 import sys
 import optparse
 from sql2graph.export2 import SQL2GraphExporter
-#from musicbrainz_schema import mbschema, mbentities
-from musicbrainz_schema__20131014 import mbschema, mbentities
+from musicbrainz_schema import mbschema, mbentities
 
 # ----------------------------------------------------------------------
 
