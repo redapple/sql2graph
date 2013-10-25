@@ -11,6 +11,7 @@ from musicbrainz_schema import mbschema, mbentities
 DEFAULT_NODES_FILE='/tmp/musicbrainz__nodes__full.csv'
 DEFAULT_RELS_FILE='/tmp/musicbrainz__rels__full.csv'
 MULTIPLE_FILES = False
+
 option_parser = optparse.OptionParser()
 option_parser.add_option("--nodes", dest="nodes_filename",
     help="Nodes file", default=DEFAULT_NODES_FILE)
@@ -27,7 +28,7 @@ option_parser.add_option("--limit", type="int", dest="limit", default=None)
 class MusicBrainzExporter(SQL2GraphExporter):
     nodes_header_override = {
             "mbid": '"mbid:string:mb_exact"',
-            "kind": '"kind:string:mb_exact"',
+            "kind": '"kind:label"',
             "pk":   '"pk:long:mb_exact"',
             "name": '"name:string:mb_fulltext"',
             "type": '"typ:string:mb_exact"',
