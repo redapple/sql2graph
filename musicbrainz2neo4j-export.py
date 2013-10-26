@@ -46,11 +46,18 @@ class MusicBrainzExporter(SQL2GraphExporter):
             "type": None,
             "format": None,
             "gender": None,
+            "packaging": None,
+            (
+                "kind",
+                "type",
+                "format",
+                "gender",
+                "packaging",
+            ): (concat_translate, '"l:label"',),
             #"latitude": '"latitude:float"',
             #"longitude": '"longitude:float"',
             "latitude": None,
             "longitude": None,
-            ("kind","type", "format", "gender"): (concat_translate, '"l:label"',),
         }
 
 exporter = MusicBrainzExporter(mbschema, mbentities)

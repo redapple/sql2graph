@@ -329,6 +329,7 @@ mbschema = Schema([
             Property('disambiguation', Column('comment')),
             Property('name', Column('name')),
             Property('status', Column('status', ForeignColumn('release_status', 'name', null=True))),
+            Property('packaging', Column('packaging', ForeignColumn('release_packaging', 'name', null=True))),
 
             #Property('barcode', Column('barcode')),
             #Property('type', Column('release_group', ForeignColumn('release_group', 'type', ForeignColumn('release_group_primary_type', 'name', null=True)))),
@@ -348,12 +349,6 @@ mbschema = Schema([
                 'PART_OF',
                 start=Reference('release', Column('id')),
                 end=Reference('release_group', Column('release_group')),
-                properties=[]
-            ),
-            Relation(
-                'PACKAGING',
-                start=Reference('release', Column('id')),
-                end=Reference('release_packaging', Column('packaging')),
                 properties=[]
             ),
         ]
