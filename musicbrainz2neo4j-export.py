@@ -58,6 +58,7 @@ class MusicBrainzExporter(SQL2GraphExporter):
             #"longitude": '"longitude:float"',
             "latitude": None,
             "longitude": None,
+            "code": None,
         }
 
 exporter = MusicBrainzExporter(mbschema, mbentities)
