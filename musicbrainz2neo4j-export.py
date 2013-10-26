@@ -24,26 +24,33 @@ option_parser.add_option("--multiple", action="store_true",
 option_parser.add_option("--limit", type="int", dest="limit", default=None)
 (options, args) = option_parser.parse_args()
 
+# this is used to concatenate some columns as a comma-separated
+# list of Labels for batch-import (branch Neo4j 2.0)
+def concat_translate(*args):
+    return """translate(
+    array_to_string(
+        %s,
+        ','),
+    ' _"', '')""" % (
+                "ARRAY[%s]" % ", ".join(
+                    ["initcap(%s)" % col
+                    for col in args])
+            )
 
 class MusicBrainzExporter(SQL2GraphExporter):
-    """
-    translate(
-    array_to_string(
-    ARRAY[
-    initcap(wrapped.kind::text),
-    initcap(wrapped.type::text),
-    wrapped.format::text],
-    ','),
-    ' _', '') AS "l:label"
-    """
     nodes_header_override = {
             "mbid": '"mbid:string:mb_exact"',
-            "kind": '"kind:label"',
             "pk":   '"pk:long:mb_exact"',
             "name": '"name:string:mb_fulltext"',
-            "type": '"typ:string:mb_exact"',
-            "latitude": '"latitude:float"',
-            "longitude": '"longitude:float"',
+            "kind": None,
+            "type": None,
+            "format": None,
+            "gender": None,
+            #"latitude": '"latitude:float"',
+            #"longitude": '"longitude:float"',
+            "latitude": None,
+            "longitude": None,
+            ("kind","type", "format", "gender"): (concat_translate, '"l:label"',),
         }
 
 exporter = MusicBrainzExporter(mbschema, mbentities)

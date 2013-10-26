@@ -185,7 +185,7 @@ mbschema = Schema([
             #Property('sort_name', Column('sort_name', ForeignColumn('artist_name', 'name'))),
             #Property('country', Column('country', ForeignColumn('country', 'name', null=True))),
             #Property('country', Column('country', ForeignColumn('country', 'iso_code', null=True))),
-            #Property('gender', Column('gender', ForeignColumn('gender', 'name', null=True))),
+            Property('gender', Column('gender', ForeignColumn('gender', 'name', null=True))),
         ],
         [
             Relation(
@@ -204,12 +204,6 @@ mbschema = Schema([
                 'ENDED_IN_AREA',
                 start=Reference('artist', Column('id')),
                 end=Reference('area', Column('end_area')),
-                properties=[]
-            ),
-            Relation(
-                'HAS_GENDER',
-                start=Reference('artist', Column('id')),
-                end=Reference('gender', Column('gender')),
                 properties=[]
             ),
         ],

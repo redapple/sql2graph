@@ -39,10 +39,21 @@ class SQL2GraphExporter(object):
     def generate_tsvfile_output_query(cls, query, output_filename, modify_headers={}):
 
         if modify_headers:
-            select_lines = ",\n".join(
-                ["wrapped.%s AS %s" % (k, v)
-                    for k, v in modify_headers.iteritems()]
-            )
+            select_lines = []
+
+            for incols, outcols in modify_headers.items():
+                # simple column renaming
+                if isinstance(incols, (str,)):
+                    if outcols is not None:
+                        select_lines.append("wrapped.%s AS %s" % (incols, outcols))
+                # merging columns
+                elif isinstance(incols, (tuple,)):
+                    infunc, outname = outcols
+                    k = infunc(*["wrapped.%s::text" % c for c in incols])
+                    select_lines.append("%s AS %s" % (k, outname))
+
+            select_lines = ",\n".join(select_lines)
+
             query= """
 SELECT
 %(fields)s
