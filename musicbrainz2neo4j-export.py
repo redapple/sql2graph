@@ -26,6 +26,16 @@ option_parser.add_option("--limit", type="int", dest="limit", default=None)
 
 
 class MusicBrainzExporter(SQL2GraphExporter):
+    """
+    translate(
+    array_to_string(
+    ARRAY[
+    initcap(wrapped.kind::text),
+    initcap(wrapped.type::text),
+    wrapped.format::text],
+    ','),
+    ' _', '') AS "l:label"
+    """
     nodes_header_override = {
             "mbid": '"mbid:string:mb_exact"',
             "kind": '"kind:label"',

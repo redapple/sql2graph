@@ -411,7 +411,7 @@ mbschema = Schema([
         [
             IntegerProperty('pk', Column('id')),
             Property('name', Column('name')),
-            Property('format', Column('format', ForeignColumn('medium_format', 'format', null=True))),
+            Property('format', Column('format', ForeignColumn('medium_format', 'name', null=True))),
         ],
         [
             Relation(

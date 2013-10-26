@@ -74,7 +74,7 @@ ENCODING '%(encoding)s';
                             [(n,t) for n, t in self.all_properties if n in ('kind', 'pk')]):
             if columns and joins:
                 node_queries.append(generate_iter_query(columns, joins,
-                    limit=self.entity_limit))
+                    limit=self.entity_limit, order_by='pk'))
 
         if multiple:
 
@@ -141,8 +141,9 @@ ANALYZE entity_mapping;
             self.all_properties if not multiple else []):
             if columns and joins:
                 node_queries.append(generate_iter_query(columns, joins,
-                    limit=self.entity_limit))
+                    limit=self.entity_limit, order_by='pk'))
 
+        #node_queries = ["""\n%s\nORDER BY pk\n""" % q for q in node_queries]
         headers = None
 
         if self.nodes_header_override:
@@ -160,6 +161,7 @@ ANALYZE entity_mapping;
                 )
             return "\n".join(qs)
         else:
+            #ordered_union_query = """\n%s\nORDER BY kind, pk\n""" % generate_union_query(node_queries)
             ordered_union_query = """\n%s\nORDER BY kind, pk\n""" % generate_union_query(node_queries)
 
             return self.generate_tsvfile_output_query(
