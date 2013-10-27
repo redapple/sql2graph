@@ -13,17 +13,34 @@ class SQL2GraphExporter(object):
     rels_header_override = None # not used currently
     output_encoding = 'UTF8'
 
-    def __init__(self, schema, entities):
+    def __init__(self, schema, entities, strict=True):
         self.cfg = None
         self.db = None
+        self.strict = strict
 
-        self.schema = SchemaHelper(schema, entities)
+        self.schema = SchemaHelper(schema, entities, strict=self.strict)
         self.entity_limit = None
         self.nodes_filename = None
         self.relations_filename = None
 
         self.all_properties = self.schema.fetch_all_fields(self.cfg, self.db)
         self.all_relations_properties = self.schema.fetch_all_relations_properties(self.cfg, self.db)
+
+        self.check_nodes_header_override()
+
+    def check_nodes_header_override(self):
+
+        all_column_names = [cname for cname, ctype in self.all_properties] + ["kind"]
+        for incols, outcols in self.nodes_header_override.items():
+            # simple column renaming
+            if isinstance(incols, (str,)):
+                if outcols is not None:
+                    if incols not in all_column_names:
+                        del self.nodes_header_override[incols]
+            # merging columns
+            elif isinstance(incols, (tuple,)):
+                valid_columns = [c for c in incols if c in all_column_names]
+                self.nodes_header_override[tuple(valid_columns)] = self.nodes_header_override.pop(incols)
 
     def set_nodes_filename(self, filename):
         self.nodes_filename = filename
@@ -158,7 +175,10 @@ ANALYZE entity_mapping;
         headers = None
 
         if self.nodes_header_override:
+            # start with 1-to-1 name map
             headers = dict([(name, name) for (name, maptype) in self.all_properties])
+
+            # fix some headers
             headers.update(self.nodes_header_override)
 
         if multiple:

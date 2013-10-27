@@ -106,9 +106,10 @@ class SchemaError(RuntimeError):
 
 class SchemaHelper(object):
 
-    def __init__(self, schema, entities):
+    def __init__(self, schema, entities, strict=True):
         self.schema = schema
         self.entities = entities
+        self.strict = strict
 
         self.check_schema()
 
@@ -126,9 +127,10 @@ class SchemaHelper(object):
                 rel_entities.append(r.start.entity)
                 rel_entities.append(r.end.entity)
 
-        missing = set(rel_entities) - set(self.entities)
-        if missing:
-            raise SchemaError("Some relations need additional entities: %s" % str(missing))
+        if self.strict:
+            missing = set(rel_entities) - set(self.entities)
+            if missing:
+                raise SchemaError("Some relations need additional entities: %s" % str(missing))
 
     def iter_entity_nodes(self, db, kind, properties=[]):
         entity = self.schema[kind]

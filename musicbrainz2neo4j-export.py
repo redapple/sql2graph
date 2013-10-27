@@ -4,7 +4,7 @@ import os
 import sys
 import optparse
 from sql2graph.export2 import SQL2GraphExporter
-from musicbrainz_schema import mbschema, mbentities
+from musicbrainz_schema import mbschema, mbentities, make_link_entity_list
 
 # ----------------------------------------------------------------------
 
@@ -13,6 +13,12 @@ DEFAULT_RELS_FILE='/tmp/musicbrainz__rels__full.csv'
 MULTIPLE_FILES = False
 
 option_parser = optparse.OptionParser()
+
+option_parser.add_option("--exclude", dest="excluded_entities",
+    help="Entities to exclude", default=None)
+option_parser.add_option("--include", dest="included_entities",
+    help="Entities to include", default=None)
+
 option_parser.add_option("--nodes", dest="nodes_filename",
     help="Nodes file", default=DEFAULT_NODES_FILE)
 option_parser.add_option("--relations", dest="relations_filename",
@@ -31,8 +37,8 @@ def concat_translate(*args):
     array_to_string(
         %s,
         ','),
-    ' _"', '')""" % (
-                "ARRAY[%s]" % ", ".join(
+    ' _"/-', '')""" % (
+                "ARRAY[\n            %s]" % ",\n            ".join(
                     ["initcap(%s)" % col
                     for col in args])
             )
@@ -46,12 +52,14 @@ class MusicBrainzExporter(SQL2GraphExporter):
             "type": None,
             "format": None,
             "gender": None,
+            "status": None,
             "packaging": None,
             (
                 "kind",
                 "type",
                 "format",
                 "gender",
+                "status",
                 "packaging",
             ): (concat_translate, '"l:label"',),
             #"latitude": '"latitude:float"',
@@ -59,9 +67,23 @@ class MusicBrainzExporter(SQL2GraphExporter):
             "latitude": None,
             "longitude": None,
             "code": None,
+            "pk": None,
+            "locale": None,
         }
 
-exporter = MusicBrainzExporter(mbschema, mbentities)
+if all([options.included_entities, options.excluded_entities]):
+    raise RuntimeError("You must choose between including or exluding entities")
+if options.excluded_entities is not None:
+    options.excluded_entities = options.excluded_entities.split(',')
+    entities = [e for e in mbentities if e not in options.excluded_entities]
+
+elif options.included_entities is not None:
+    options.included_entities = options.included_entities.split(',')
+    entities = options.included_entities
+    entities += make_link_entity_list(entities)
+else:
+    entities = mbentities
+exporter = MusicBrainzExporter(mbschema, entities, strict=False)
 
 exporter.set_nodes_filename(options.nodes_filename)
 exporter.set_rels_filename(options.relations_filename)

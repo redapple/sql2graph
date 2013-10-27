@@ -23,6 +23,12 @@ def make_link_entity(start_entity, end_entity):
         ]
     )
 
+def make_link_entity_list(entities):
+    entity_set = set(entities)
+    return ["l_%s_%s" % (e0, e1)
+            for e0, e1 in linked_entities
+                if set([e0, e1]) & entity_set]
+
 mbentities = [
     'area',
     'area_alias',
@@ -118,7 +124,7 @@ linked_entities = (
         ('work', 'work'),
 )
 
-mbentities.extend(["l_%s_%s" % (e0, e1) for e0, e1 in linked_entities])
+mbentities.extend(make_link_entity_list(mbentities))
 
 mbschema = Schema([
     Entity('area_type', [
