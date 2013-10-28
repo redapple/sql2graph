@@ -13,17 +13,34 @@ class SQL2GraphExporter(object):
     rels_header_override = None # not used currently
     output_encoding = 'UTF8'
 
-    def __init__(self, schema, entities):
+    def __init__(self, schema, entities, strict=True):
         self.cfg = None
         self.db = None
+        self.strict = strict
 
-        self.schema = SchemaHelper(schema, entities)
+        self.schema = SchemaHelper(schema, entities, strict=self.strict)
         self.entity_limit = None
         self.nodes_filename = None
         self.relations_filename = None
 
         self.all_properties = self.schema.fetch_all_fields(self.cfg, self.db)
         self.all_relations_properties = self.schema.fetch_all_relations_properties(self.cfg, self.db)
+
+        self.check_nodes_header_override()
+
+    def check_nodes_header_override(self):
+
+        all_column_names = [cname for cname, ctype in self.all_properties] + ["kind"]
+        for incols, outcols in self.nodes_header_override.items():
+            # simple column renaming
+            if isinstance(incols, (str,)):
+                if outcols is not None:
+                    if incols not in all_column_names:
+                        del self.nodes_header_override[incols]
+            # merging columns
+            elif isinstance(incols, (tuple,)):
+                valid_columns = [c for c in incols if c in all_column_names]
+                self.nodes_header_override[tuple(valid_columns)] = self.nodes_header_override.pop(incols)
 
     def set_nodes_filename(self, filename):
         self.nodes_filename = filename
@@ -39,10 +56,21 @@ class SQL2GraphExporter(object):
     def generate_tsvfile_output_query(cls, query, output_filename, modify_headers={}):
 
         if modify_headers:
-            select_lines = ",\n".join(
-                ["wrapped.%s AS %s" % (k, v)
-                    for k, v in modify_headers.iteritems()]
-            )
+            select_lines = []
+
+            for incols, outcols in modify_headers.items():
+                # simple column renaming
+                if isinstance(incols, (str,)):
+                    if outcols is not None:
+                        select_lines.append("wrapped.%s AS %s" % (incols, outcols))
+                # merging columns
+                elif isinstance(incols, (tuple,)):
+                    infunc, outname = outcols
+                    k = infunc(*["wrapped.%s::text" % c for c in incols])
+                    select_lines.append("%s AS %s" % (k, outname))
+
+            select_lines = ",\n".join(select_lines)
+
             query= """
 SELECT
 %(fields)s
@@ -74,7 +102,7 @@ ENCODING '%(encoding)s';
                             [(n,t) for n, t in self.all_properties if n in ('kind', 'pk')]):
             if columns and joins:
                 node_queries.append(generate_iter_query(columns, joins,
-                    limit=self.entity_limit))
+                    limit=self.entity_limit, order_by='pk'))
 
         if multiple:
 
@@ -141,12 +169,16 @@ ANALYZE entity_mapping;
             self.all_properties if not multiple else []):
             if columns and joins:
                 node_queries.append(generate_iter_query(columns, joins,
-                    limit=self.entity_limit))
+                    limit=self.entity_limit, order_by='pk'))
 
+        #node_queries = ["""\n%s\nORDER BY pk\n""" % q for q in node_queries]
         headers = None
 
         if self.nodes_header_override:
+            # start with 1-to-1 name map
             headers = dict([(name, name) for (name, maptype) in self.all_properties])
+
+            # fix some headers
             headers.update(self.nodes_header_override)
 
         if multiple:
@@ -160,6 +192,7 @@ ANALYZE entity_mapping;
                 )
             return "\n".join(qs)
         else:
+            #ordered_union_query = """\n%s\nORDER BY kind, pk\n""" % generate_union_query(node_queries)
             ordered_union_query = """\n%s\nORDER BY kind, pk\n""" % generate_union_query(node_queries)
 
             return self.generate_tsvfile_output_query(

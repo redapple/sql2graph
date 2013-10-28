@@ -71,7 +71,7 @@ def placeholders(ids):
     return ", ".join(["%s" for i in ids])
 
 
-def generate_iter_query(columns, joins, ids=(), limit=None):
+def generate_iter_query(columns, joins, ids=(), limit=None, order_by=None):
     if not columns or not joins:
         return ""
 
@@ -80,12 +80,16 @@ def generate_iter_query(columns, joins, ids=(), limit=None):
     if ids:
         tpl.append("WHERE %(id_column)s IN (%(ids)s)")
     #tpl.append("ORDER BY %(id_column)s")
+    if order_by is not None:
+        tpl.append(u"ORDER BY %s" % order_by)
     if limit is not None:
         tpl.append("LIMIT %d" % limit)
+
     sql_columns = ',\n'.join('  %s' % (i, ) for i in columns)
     sql_joins = '\n'.join('  ' + i for i in joins)
     sql = "\n".join(tpl) % dict(columns=sql_columns, joins=sql_joins,
                                 id_column=id_column, ids=placeholders(ids))
+
     return "(%s)" % sql
 
 
@@ -102,9 +106,10 @@ class SchemaError(RuntimeError):
 
 class SchemaHelper(object):
 
-    def __init__(self, schema, entities):
+    def __init__(self, schema, entities, strict=True):
         self.schema = schema
         self.entities = entities
+        self.strict = strict
 
         self.check_schema()
 
@@ -122,9 +127,10 @@ class SchemaHelper(object):
                 rel_entities.append(r.start.entity)
                 rel_entities.append(r.end.entity)
 
-        missing = set(rel_entities) - set(self.entities)
-        if missing:
-            raise SchemaError("Some relations need additional entities: %s" % str(missing))
+        if self.strict:
+            missing = set(rel_entities) - set(self.entities)
+            if missing:
+                raise SchemaError("Some relations need additional entities: %s" % str(missing))
 
     def iter_entity_nodes(self, db, kind, properties=[]):
         entity = self.schema[kind]
