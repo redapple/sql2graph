@@ -1,3 +1,14 @@
+// Labels and artists
+
+// American artists signed on British record labels
+START usa=node:mb_fulltext(name="United States"),
+gb=node:mb_fulltext(name="United Kingdom")
+MATCH (usa:Country), (gb:Country),
+(a:Artist)-[:FROM_AREA]-(usa),
+(a:Artist)-[:RECORDING_CONTRACT]-(l:Label),
+(l)-[:FROM_AREA]-(gb)
+RETURN a,l,usa,gb
+
 // Countries and their anthem
 MATCH (c:Country)
 WITH c
