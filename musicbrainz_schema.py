@@ -195,7 +195,7 @@ mbschema = Schema([
         ],
         [
             Relation(
-                'FROM',
+                'FROM_AREA',
                 start=Reference('artist', Column('id')),
                 end=Reference('area', Column('area')),
                 properties=[]
@@ -410,7 +410,7 @@ mbschema = Schema([
         ],
         [
             Relation(
-                'ON_MEDIUM',
+                'RELEASED_ON_MEDIUM',
                 start=Reference('release', Column('release')),
                 end=Reference('medium', Column('id')),
                 properties=[]
@@ -454,6 +454,8 @@ mbschema = Schema([
             IntegerProperty('pk', Column('id')),
             Property('mbid', Column('gid')),
             Property('name', Column('name')),
+            IntegerProperty('position', Column('position')),
+            IntegerProperty('length', Column('length')),
         ],
         [
             Relation(
