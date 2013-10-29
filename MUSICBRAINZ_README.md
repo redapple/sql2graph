@@ -94,8 +94,8 @@ Now,
 $ cd /path/to/jexp/batch-import
 $ git checkout -b neo4j-2.0 origin/20
 $ # build batch-import...
-$ # prepare a bacth.properties file:
-$ echo "batch_import.node_index.mb_exact=exact\nbatch_import.node_index.mb_full=fulltext" > batch.properties
+$ # prepare a batch.properties file:
+$ echo -e "batch_import.node_index.mb_exact=exact\nbatch_import.node_index.mb_full=fulltext" > batch.properties
 $ MAVEN_OPTS="-server -Xmx10G" && mvn exec:java -Dexec.mainClass="org.neo4j.batchimport.Importer" \
 -Dexec.args="batch.properties muscbrainz.db /tmp/musicbrainz__nodes__full.csv /tmp/musicbrainz__rels__full.csv"
 ```
