@@ -89,6 +89,7 @@ Now,
 * make sure you swith to the "20" branch of batch-import (for labels support)
 * using a `mb_full` and `mb_exact` index in a custom `./batch.properties` file,
 * putting the database under `./musicbrainz.db`.
+* (this will erase your current neo4j datastore)
 
 ```shell    
 $ cd /path/to/jexp/batch-import
@@ -99,3 +100,6 @@ $ echo -e "batch_import.node_index.mb_exact=exact\nbatch_import.node_index.mb_fu
 $ MAVEN_OPTS="-server -Xmx10G" && mvn exec:java -Dexec.mainClass="org.neo4j.batchimport.Importer" \
 -Dexec.args="batch.properties muscbrainz.db /tmp/musicbrainz__nodes__full.csv /tmp/musicbrainz__rels__full.csv"
 ```
+
+Finally, restart your Neo4j instance (you had stopped it before running the batch-import, right?)
+and play around with MusicBrainz data with the sample queries in examples/musicbrainz/queries.cyp
