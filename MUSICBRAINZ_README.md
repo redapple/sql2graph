@@ -84,22 +84,32 @@ By default, all core entities in MusicBrainz are exported
 
 ### Import into Neo4j
 
+```shell
+$ cd /path/to/sql2graph/
+$ python musicbrainz2neo4j-export.py > musicbrainz2neo4j.sql
+
+//export just 1000 rows per table
+$ python musicbrainz2neo4j-export.py --limit 1000 > musicbrainz2neo4j.sql
+$ cd /path/to/mbslave
+$ cat /path/to/musicbrainz2neo4j.sql | ./mbslave-psql.py
+```
+
+By default, the generated TSV/CSV files are in `/tmp/musicbrainz__nodes__full.csv` and `/tmp/musicbrainz__rels__full.csv`.
+
 Now,
 * use the batch-import project to import the csv files into neo4j,
-* make sure you swith to the "20" branch of batch-import (for labels support)
 * using a `mb_full` and `mb_exact` index in a custom `./batch.properties` file,
 * putting the database under `./musicbrainz.db`.
 * (this will erase your current neo4j datastore)
 
 ```shell    
 $ cd /path/to/jexp/batch-import
-$ git checkout -b neo4j-2.0 origin/20
 $ # build batch-import...
 $ # prepare a batch.properties file:
 $ echo -e "batch_import.node_index.mb_exact=exact\nbatch_import.node_index.mb_full=fulltext" > batch.properties
-$ MAVEN_OPTS="-server -Xmx10G" && mvn exec:java -Dexec.mainClass="org.neo4j.batchimport.Importer" \
--Dexec.args="batch.properties muscbrainz.db /tmp/musicbrainz__nodes__full.csv /tmp/musicbrainz__rels__full.csv"
+$ MAVEN_OPTS="-server -Xmx10G -Dfile.encoding=UTF-8" mvn exec:java -Dfile.encoding=UTF-8 -Dexec.mainClass="org.neo4j.batchimport.Importer" -Dexec.args="batch.properties musicbrainz.db /tmp/musicbrainz__nodes__full.csv /tmp/musicbrainz__rels__full.csv"
 ```
+
 
 Finally, restart your Neo4j instance (you had stopped it before running the batch-import, right?)
 and play around with MusicBrainz data with the sample queries in examples/musicbrainz/queries.cyp

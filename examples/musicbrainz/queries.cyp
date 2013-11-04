@@ -12,7 +12,7 @@ RETURN a,l,usa,gb
 // Countries and their anthem
 MATCH (c:Country)
 WITH c
-MATCH c-[r?:ANTHEM]-(w:Work)
+MATCH c-[:ANTHEM]-(w:Work)
 RETURN c.name, w.name;
 
 
@@ -108,8 +108,7 @@ ORDER BY nb_tracks DESC
 LIMIT 10;
 
 
-// most prolific writers/composers for some pop artists
-// Madonna
+// most prolific writers/composers for some pop artists, Madonna
 START a=node:mb_exact(mbid="45a663b5-b1cb-4a91-bff6-2bef7bbfdd76")
 MATCH (a)-[:CREDITED_AS]-(ac),
 (ac)-[:CREDITED_ON]-(rec:Recording),
