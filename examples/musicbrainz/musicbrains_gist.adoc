@@ -15,7 +15,7 @@ CREATE
   (madonna:Artist{name:'Madonna',mbid:'79239441-bfd5-4981-a70c-55c3f15c1287'}),
   (evita:Recording{name:"Eva and Magaldi / Eva Beware of the City"}),
   (e_and_m:Work{name:"Evita: Eva and Magaldi",mbid:"d7190526-69b9-4d9d-a786-983833c18c1a"}),
-  (ac_mad:ArtistCreadit{name:'Madonna'}),
+  (ac_mad:ArtistCredit{name:'Madonna'}),
   (madonna)-[:CREDITED_AS]->(ac_mad),
   (ac_mad)-[:CREDITED_ON]->evita-[:PERFORMANCE]->(e_and_m)
   
