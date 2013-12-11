@@ -98,15 +98,17 @@ By default, the generated TSV/CSV files are in `/tmp/musicbrainz__nodes__full.cs
 
 Now,
 * use the batch-import project to import the csv files into neo4j,
-* using a `mb_full` and `mb_exact` index in a custom `./batch.properties` file,
+* make sure you swith to the "20" branch of batch-import (for labels support)
+* using a `mb_fulltext` and `mb_exact` index in a custom `./batch.properties` file,
 * putting the database under `./musicbrainz.db`.
 * (this will erase your current neo4j datastore)
 
 ```shell    
 $ cd /path/to/jexp/batch-import
+$ git checkout -b neo4j-2.0 origin/20
 $ # build batch-import...
 $ # prepare a batch.properties file:
-$ echo -e "batch_import.node_index.mb_exact=exact\nbatch_import.node_index.mb_full=fulltext" > batch.properties
+$ echo -e "batch_import.node_index.mb_exact=exact\nbatch_import.node_index.mb_fulltext=fulltext" > batch.properties
 $ MAVEN_OPTS="-server -Xmx10G -Dfile.encoding=UTF-8" mvn exec:java -Dfile.encoding=UTF-8 -Dexec.mainClass="org.neo4j.batchimport.Importer" -Dexec.args="batch.properties musicbrainz.db /tmp/musicbrainz__nodes__full.csv /tmp/musicbrainz__rels__full.csv"
 ```
 
